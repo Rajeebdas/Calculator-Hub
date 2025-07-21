@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator-Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .calculator-card {
+            transition: all 0.3s ease;
+        }
+        .calculator-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .dark-mode {
+            background-color: #181e29 !important;
+            color: #f7fafc;
+        }
+        .dark-mode .min-h-screen,
+        .dark-mode .container,
+        .dark-mode main,
+        .dark-mode .calculator-card {
+            background-color: #232b3a !important;
+            color: #f7fafc !important;
+        }
+        .dark-mode .calculator-card {
+            border-color: #374151;
+        }
+        .dark-mode .right-panel-heading,
+        .dark-mode .calculator-card h3,
+        .dark-mode h1, .dark-mode h2, .dark-mode h3 {
+            color: #fff !important;
+        }
+        .dark-mode .calculator-card p,
+        .dark-mode .calculator-card ul,
+        .dark-mode .calculator-card li {
+            color: #d1d5db !important;
+        }
+        .dark-mode .bg-gray-50 {
+            background-color: #232b3a !important;
+        }
+        .dark-mode .border-gray-200 {
+            border-color: #374151 !important;
+        }
+        .dark-mode .bg-white {
+            background-color: #232b3a !important;
+        }
+        .dark-mode .bg-indigo-600 {
+            background-color: #312e81 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            border-bottom: none;
+        }
+        .dark-mode .bg-indigo-600:hover {
+            background-color: #312e81 !important;
+        }
+        .dark-mode nav {
+            box-shadow: none !important;
+            border-bottom: none !important;
+        }
+        .dark-mode .bg-blue-100,
+        .dark-mode .bg-orange-100,
+        .dark-mode .bg-green-100,
+        .dark-mode .bg-purple-100,
+        .dark-mode .bg-pink-100,
+        .dark-mode .bg-gray-100 {
+            background-color: #374151 !important;
+        }
+        .dark-mode .text-blue-600,
+        .dark-mode .text-orange-600,
+        .dark-mode .text-green-600,
+        .dark-mode .text-purple-600,
+        .dark-mode .text-pink-600,
+        .dark-mode .text-gray-600 {
+            color: #a5b4fc !important;
+        }
+        .dark-mode .calculator-card.shadow-md,
+        .dark-mode .calculator-card.shadow-lg {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.7) !important;
+        }
+        .dark-mode input, .dark-mode select, .dark-mode button {
+            background-color: #4a5568;
+            color: #f7fafc;
+            border-color: #718096;
+        }
+        .dark-mode .calc-btn {
+            background-color: #3d4a5d;
+        }
+        .dark-mode .calc-btn.function {
+            background-color: #4a5568;
+        }
+        .dark-mode .calc-btn.operator {
+            background-color: #5f6c84;
+        }
+        .dark-mode .calc-btn.equals {
+            background-color: #4f46e5;
+        }
+        .dark-mode .calc-display {
+            background-color: #2d3748;
+            border-color: #4a5568;
+        }
+        
+        .dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode .right-panel-heading, .dark-mode .calculator-card h3 {
+            color: #fff !important;
+        }
+        
+        /* Enhanced Calculator Button Styles */
+        .calc-btn {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .calc-btn:hover {
+            background-color: #e2e8f0;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .calc-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .calc-btn.function {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+        }
+        
+        .calc-btn.function:hover {
+            background-color: #e2e8f0;
+        }
+        
+        .calc-btn.operator {
+            background-color: #dbeafe;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+        
+        .calc-btn.operator:hover {
+            background-color: #bfdbfe;
+        }
+        
+        .calc-btn.equals {
+            background-color: #3b82f6;
+            color: white;
+            font-weight: 700;
+        }
+        
+        .calc-btn.equals:hover {
+            background-color: #2563eb;
+        }
+        
+        /* Dark mode button styles */
+        .dark-mode .calc-btn {
+            background-color: #374151;
+            border-color: #4b5563;
+            color: #f9fafb;
+        }
+        
+        .dark-mode .calc-btn:hover {
+            background-color: #4b5563;
+        }
+        
+        .dark-mode .calc-btn.function {
+            background-color: #4b5563;
+            color: #d1d5db;
+        }
+        
+        .dark-mode .calc-btn.function:hover {
+            background-color: #6b7280;
+        }
+        
+        .dark-mode .calc-btn.operator {
+            background-color: #1e40af;
+            color: #dbeafe;
+        }
+        
+        .dark-mode .calc-btn.operator:hover {
+            background-color: #1d4ed8;
+        }
+        
+        .dark-mode .calc-btn.equals {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .dark-mode .calc-btn.equals:hover {
+            background-color: #2563eb;
+        }
+        .dark-mode .bg-indigo-600,
+        .dark-mode nav {
+            background-color: #312e81 !important;
+            box-shadow: none !important;
+            border-bottom: none !important;
+        }
+        .dark-mode html, .dark-mode body {
+            background-color: #181e29 !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="min-h-screen">
+        <!-- Navbar -->
+        <nav class="bg-indigo-600 text-white p-4 shadow-md flex justify-between items-center">
+                <h1 class="text-2xl font-bold">Calculator-Hub</h1>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="px-3 py-1 rounded bg-indigo-700 hover:bg-indigo-800 transition">
+                        🌙 Dark
+                    </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="container mx-auto p-4">
+            <!-- Scientific Calculator and Categories Side by Side -->
+            <div class="flex flex-col lg:flex-row gap-8 mb-12">
+                <!-- Scientific Calculator Section - Left Side -->
+                <div class="lg:w-2/3">
+                    <h2 class="text-3xl font-bold mb-6 text-center lg:text-left">Scientific Calculator</h2>
+                    <div class="calculator-card bg-white rounded-lg shadow-md p-8 border border-gray-200 w-full">
+                        <div class="calc-display bg-gray-100 p-6 rounded mb-6 text-right text-4xl font-mono overflow-x-auto" id="sciDisplay">0</div>
+                        <div class="grid grid-cols-5 gap-3">
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciClear()">C</button>
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciBackspace()">⌫</button>
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciOperation('(')">(</button>
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciOperation(')')">)</button>
+                            <button class="calc-btn operator p-3 rounded text-lg" onclick="sciOperation('/')">÷</button>
+                            
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciFunction('sin(')">sin</button>
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciFunction('cos(')">cos</button>
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciFunction('tan(')">tan</button>
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciOperation('^')">^</button>
+                            <button class="calc-btn operator p-3 rounded text-lg" onclick="sciOperation('*')">×</button>
+                            
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciFunction('log(')">log</button>
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciFunction('ln(')">ln</button>
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciOperation('√(')">√</button>
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciOperation('π')">π</button>
+                            <button class="calc-btn operator p-3 rounded text-lg" onclick="sciOperation('-')">-</button>
+                            
+                            <button class="calc-btn p-3 rounded text-lg" onclick="sciInput('7')">7</button>
+                            <button class="calc-btn p-3 rounded text-lg" onclick="sciInput('8')">8</button>
+                            <button class="calc-btn p-3 rounded text-lg" onclick="sciInput('9')">9</button>
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciOperation('!')">!</button>
+                            <button class="calc-btn operator p-3 rounded text-lg" onclick="sciOperation('+')">+</button>
+                            
+                            <button class="calc-btn p-3 rounded text-lg" onclick="sciInput('4')">4</button>
+                            <button class="calc-btn p-3 rounded text-lg" onclick="sciInput('5')">5</button>
+                            <button class="calc-btn p-3 rounded text-lg" onclick="sciInput('6')">6</button>
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciOperation('e')">e</button>
+                            <button class="calc-btn equals p-3 rounded text-white text-lg" onclick="sciCalculate()">=</button>
+                            
+                                                    <button class="calc-btn p-3 rounded text-lg" onclick="sciInput('1')">1</button>
+                        <button class="calc-btn p-3 rounded text-lg" onclick="sciInput('2')">2</button>
+                        <button class="calc-btn p-3 rounded text-lg" onclick="sciInput('3')">3</button>
+                        <button class="calc-btn function p-3 rounded text-lg" onclick="sciDecimal()">.</button>
+                        <button class="calc-btn function p-3 rounded text-lg" onclick="sciOperation('%')">%</button>
+                        
+                                                    <button class="calc-btn p-3 rounded text-lg col-span-2" onclick="sciInput('0')">0</button>
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciOperation('1/')">1/x</button>
+                            <!-- Remove the equals button from the last row -->
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciOperation('abs(')">|x|</button>
+                            <button class="calc-btn function p-3 rounded text-lg" onclick="sciAns()">Ans</button>
+                        </div>
+                        <div class="mt-4 text-center text-sm text-gray-500">
+                            💡 Tip: You can also use your keyboard! Press Enter or = to calculate, Escape to clear.
+                        </div>
+                    </div>
+                    <!-- Calculation History -->
+                    <div id="sciHistory" class="mt-6 bg-gray-50 rounded p-4 text-sm text-gray-700 max-h-40 overflow-y-auto border border-gray-200">
+                        <div class="font-semibold mb-2 text-gray-500">Calculation History</div>
+                        <ul id="sciHistoryList"></ul>
+                    </div>
+                </div>
+
+                <!-- Calculator Categories Section - Right Side -->
+                <div class="lg:w-1/3">
+                    <h2 class="text-2xl font-semibold mb-6 text-center lg:text-left right-panel-heading">Choose Your Calculator</h2>
+            
+            <!-- Calculator Categories Grid -->
+                    <div class="grid grid-cols-1 gap-4">
+                <!-- Finance Calculator Card -->
+                <a href="FinanceTools.html" target="_blank" rel="noopener" class="calculator-card bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-blue-100 p-3 rounded-full mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold right-panel-heading">Finance Calculators</h3>
+                    </div>
+                    <p class="text-gray-600">EMI, GST, tax, currency conversion, and other financial tools</p>
+                </a>
+
+                <!-- Construction Calculator Card -->
+                <a href="Engineeringtools.html" target="_blank" rel="noopener" class="calculator-card bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-orange-100 p-3 rounded-full mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold right-panel-heading">Construction Calculators</h3>
+                    </div>
+                    <p class="text-gray-600">Concrete, paint, electrical load, and other construction tools</p>
+                </a>
+
+                <!-- Health Calculator Card -->
+                <a href="HealthFitnesstools.html" target="_blank" rel="noopener" class="calculator-card bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-green-100 p-3 rounded-full mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold right-panel-heading">Health & Fitness</h3>
+                    </div>
+                    <p class="text-gray-600">BMI, calorie, BMR, body fat, and other health calculators</p>
+                </a>
+
+                <!-- Date Calculator Card -->
+                <a href="MathSchoolTools.html" target="_blank" rel="noopener" class="calculator-card bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-pink-100 p-3 rounded-full mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold right-panel-heading">Math & School Tools</h3>
+                    </div>
+                    <p class="text-gray-600">Percentage, fraction, area, unit, equation, statistics, matrix, date, age, speed calculators</p>
+                </a>
+
+                    </div>
+                </div>
+            </div>
+
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white p-6 mt-10">
+            <div class="container mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <h3 class="text-xl font-bold mb-2">All-in-One Calculator Hub</h3>
+                        <p class="text-gray-400">Your comprehensive calculator collection</p>
+                    </div>
+                    <div class="text-center md:text-right">
+                        <p class="text-gray-400 mb-2">© <span id="currentYear"></span> Calculator Hub. All rights reserved.</p>
+                        <p class="text-gray-400 text-sm">
+                            Note: Calculations are for informational purposes only.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Dark Mode Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            themeToggle.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+            
+            // Save preference to localStorage
+            localStorage.setItem('darkMode', isDark);
+        });
+
+        // Check for saved theme preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️ Light';
+        }
+
+        // Set current year in footer
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // Scientific Calculator Logic
+        // Add keyboard event listener for the entire document
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            
+            // Prevent default behavior for calculator keys
+            if (['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '+', '-', '*', '/', '(', ')', '=', 'Enter', 'Backspace', 'Escape'].includes(key)) {
+                event.preventDefault();
+            }
+            
+            // Handle number inputs
+            if (/^[0-9]$/.test(key)) {
+                sciInput(key);
+            }
+            // Handle operators
+            else if (key === '+') sciOperation('+');
+            else if (key === '-') sciOperation('-');
+            else if (key === '*') sciOperation('*');
+            else if (key === '/') sciOperation('/');
+            else if (key === '(') sciOperation('(');
+            else if (key === ')') sciOperation(')');
+            else if (key === '.') sciDecimal();
+            else if (key === '=' || key === 'Enter') sciCalculate();
+            else if (key === 'Backspace') sciBackspace();
+            else if (key === 'Escape') sciClear();
+            else if (key === '%') sciOperation('%');
+            else if (key === '^') sciOperation('^');
+        });
+        let sciCurrentInput = '0';
+        let sciExpression = '';
+        let sciHistory = [];
+        let sciLastAnswer = '';
+
+        function updateSciHistory() {
+            const historyList = document.getElementById('sciHistoryList');
+            historyList.innerHTML = sciHistory.slice(-10).reverse().map(item => `<li><span class='text-gray-500'>${item.expr}</span> = <span class='font-bold'>${item.result}</span></li>`).join('');
+        }
+
+        function sciUpdateDisplay() {
+            const display = document.getElementById('sciDisplay');
+            display.textContent = sciCurrentInput;
+        }
+
+        function sciInput(number) {
+            if (sciCurrentInput === '0') {
+                sciCurrentInput = number;
+            } else {
+                sciCurrentInput += number;
+            }
+            sciExpression += number;
+            sciUpdateDisplay();
+        }
+
+        function sciDecimal() {
+            if (!sciCurrentInput.includes('.')) {
+                sciCurrentInput += '.';
+                sciExpression += '.';
+                sciUpdateDisplay();
+            }
+        }
+
+        function sciClear() {
+            sciCurrentInput = '0';
+            sciExpression = '';
+            sciUpdateDisplay();
+        }
+
+        function sciBackspace() {
+            if (sciCurrentInput.length === 1) {
+                sciCurrentInput = '0';
+            } else {
+                sciCurrentInput = sciCurrentInput.slice(0, -1);
+            }
+            sciExpression = sciExpression.slice(0, -1);
+            sciUpdateDisplay();
+        }
+
+        function sciOperation(op) {
+            if (op === '√(') {
+                sciExpression = 'Math.sqrt(' + sciExpression;
+            } else if (op === '^') {
+                sciExpression += '**';
+            } else if (op === '!') {
+                sciExpression = 'factorial(' + sciExpression + ')';
+            } else if (op === 'π') {
+                sciCurrentInput = 'π';
+                sciExpression += 'Math.PI';
+            } else if (op === 'e') {
+                sciCurrentInput = 'e';
+                sciExpression += 'Math.E';
+            } else if (op === '1/') {
+                sciExpression = '1/(' + sciExpression + ')';
+            } else if (op === 'abs(') {
+                sciExpression = 'Math.abs(' + sciExpression;
+            } else {
+                sciExpression += op;
+            }
+            
+            sciCurrentInput += op;
+            sciUpdateDisplay();
+        }
+
+        function sciFunction(func) {
+            if (func === 'sin(' || func === 'cos(' || func === 'tan(') {
+                sciExpression = 'Math.' + func;
+            } else if (func === 'log(') {
+                sciExpression = 'Math.log10(' + sciExpression;
+            } else if (func === 'ln(') {
+                sciExpression = 'Math.log(' + sciExpression;
+            }
+            
+            sciCurrentInput = func;
+            sciUpdateDisplay();
+        }
+
+        function sciAns() {
+            if (sciLastAnswer !== '') {
+                sciCurrentInput += sciLastAnswer;
+                sciExpression += sciLastAnswer;
+                sciUpdateDisplay();
+            }
+        }
+
+        function sciCalculate() {
+            try {
+                // Replace special constants and functions
+                let expr = sciExpression
+                    .replace(/\^/g, '**')
+                    .replace(/√\(/g, 'Math.sqrt(')
+                    .replace(/sin\(/g, 'Math.sin(')
+                    .replace(/cos\(/g, 'Math.cos(')
+                    .replace(/tan\(/g, 'Math.tan(')
+                    .replace(/log\(/g, 'Math.log10(')
+                    .replace(/ln\(/g, 'Math.log(')
+                    .replace(/π/g, 'Math.PI')
+                    .replace(/e/g, 'Math.E');
+                // Evaluate the expression
+                const result = eval(expr);
+                sciCurrentInput = result.toString();
+                sciLastAnswer = sciCurrentInput;
+                sciHistory.push({ expr: sciExpression, result: sciCurrentInput });
+                updateSciHistory();
+                sciExpression = result.toString();
+                sciUpdateDisplay();
+            } catch (error) {
+                sciCurrentInput = 'Error';
+                sciUpdateDisplay();
+                setTimeout(() => {
+                    sciCurrentInput = '0';
+                    sciExpression = '';
+                    sciUpdateDisplay();
+                }, 1000);
+            }
+        }
+
+        // Helper function for factorial
+        function factorial(n) {
+            if (n < 0) return NaN;
+            if (n === 0 || n === 1) return 1;
+            let result = 1;
+            for (let i = 2; i <= n; i++) {
+                result *= i;
+            }
+            return result;
+        }
+
+        // Initialize history on page load
+        updateSciHistory();
+    </script>
+</body>
+</html>

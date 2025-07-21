@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanceTools - Business & Financial Calculators</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        .calculator-card {
+            transition: all 0.3s ease;
+            max-width: 640px;
+            min-width: 400px;
+            padding: 2.5rem 2.5rem;
+            font-size: 1.18rem;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.13), 0 1.5px 6px rgba(0,0,0,0.10);
+        }
+        .calculator-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .dark-mode {
+            background-color: #1a202c;
+            color: #f7fafc;
+        }
+        .dark-mode .calculator-card {
+            background-color: #2d3748;
+            border-color: #4a5568;
+        }
+        .dark-mode input, .dark-mode select {
+            background-color: #4a5568;
+            color: #f7fafc;
+            border-color: #718096;
+        }
+        .dark-mode input::placeholder {
+            color: #cbd5e0;
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background-color: #4299e1;
+            color: white;
+        }
+        .dark-mode .tab-button.active {
+            background-color: #2b6cb0;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [darkMode, setDarkMode] = useState(false);
+            const [activeCalculator, setActiveCalculator] = useState('gst'); // default to GST
+            const [exchangeRates, setExchangeRates] = useState(null);
+
+            const calculators = [
+              { key: 'gst', label: 'GST Calculator', component: GSTCalculator },
+              { key: 'emi', label: 'EMI Calculator', component: EMICalculator },
+              { key: 'interest', label: 'Interest Calculator', component: InterestCalculator },
+              { key: 'tax', label: 'Tax Calculator', component: TaxCalculator },
+              { key: 'currency', label: 'Currency Converter', component: CurrencyConverter },
+              { key: 'profit', label: 'Profit Margin Calculator', component: ProfitMarginCalculator },
+              { key: 'discount', label: 'Discount Calculator', component: DiscountCalculator },
+              { key: 'tip', label: 'Tip Calculator', component: TipCalculator },
+              { key: 'salary', label: 'Salary Calculator', component: SalaryCalculator },
+              { key: 'investment', label: 'Investment Calculator', component: InvestmentCalculator },
+              { key: 'retirement', label: 'Retirement Calculator', component: RetirementCalculator },
+            ];
+
+            // Toggle dark mode
+            const toggleDarkMode = () => {
+                setDarkMode(!darkMode);
+                document.body.classList.toggle('dark-mode');
+            };
+
+            // Fetch exchange rates
+            useEffect(() => {
+                const fetchExchangeRates = async () => {
+                    try {
+                        const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+                        setExchangeRates(response.data.rates);
+                    } catch (error) {
+                        console.error("Error fetching exchange rates:", error);
+                        // Fallback rates if API fails
+                        setExchangeRates({
+                            USD: 1,
+                            INR: 75,
+                            EUR: 0.85,
+                            GBP: 0.75,
+                            JPY: 110
+                        });
+                    }
+                };
+                fetchExchangeRates();
+            }, []);
+
+            return (
+                <div className={`min-h-screen ${darkMode ? 'dark-mode' : ''}`}>
+                    {/* Navbar */}
+                    <nav className="bg-blue-600 text-white p-4 shadow-md">
+                        <div className="container mx-auto flex justify-between items-center">
+                            <h1 className="text-2xl font-bold">FinanceTools</h1>
+                            <div className="flex items-center space-x-4">
+                                <button 
+                                    onClick={toggleDarkMode}
+                                    className="px-3 py-1 rounded bg-blue-700 hover:bg-blue-800 transition"
+                                >
+                                    {darkMode ? '☀️ Light' : '🌙 Dark'}
+                                </button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    {/* Main Content */}
+                    <main className="container mx-auto p-4">
+                        <h2 className="text-4xl font-extrabold mb-8 text-center tracking-tight">Financial Calculators</h2>
+                        {/* Calculator Buttons */}
+                        <div className="flex flex-wrap justify-center mb-8 gap-2">
+                          {calculators.map(calc => (
+                            <button
+                              key={calc.key}
+                              onClick={() => setActiveCalculator(calc.key)}
+                              className={`tab-button px-4 py-2 rounded ${activeCalculator === calc.key ? 'active' : 'bg-gray-200 dark:bg-gray-700'}`}
+                            >
+                              {calc.label}
+                            </button>
+                          ))}
+                        </div>
+                        {/* Show Only Selected Calculator */}
+                        <div className="flex justify-center">
+                          {calculators.map(calc =>
+                            activeCalculator === calc.key
+                              ? React.createElement(calc.component, { darkMode, exchangeRates })
+                              : null
+                          )}
+                        </div>
+                    </main>
+
+                    {/* Footer */}
+                    <footer className="bg-gray-800 text-white p-6 mt-10">
+                        <div className="container mx-auto">
+                            <div className="flex flex-col md:flex-row justify-between items-center">
+                                <div className="mb-4 md:mb-0">
+                                    <h3 className="text-xl font-bold mb-2">FinanceTools</h3>
+                                    <p className="text-gray-400">Your comprehensive financial calculator suite</p>
+                                </div>
+                                <div className="text-center md:text-right">
+                                    <p className="text-gray-400 mb-2">© {new Date().getFullYear()} FinanceTools. All rights reserved.</p>
+                                    <p className="text-gray-400 text-sm">
+                                        Note: Calculations are for informational purposes only. Consult a financial advisor for professional advice.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        // GST Calculator Component
+        function GSTCalculator({ darkMode }) {
+            const [amount, setAmount] = useState('');
+            const [gstRate, setGstRate] = useState(18);
+            const [operation, setOperation] = useState('add');
+
+            const calculateGST = () => {
+                const numAmount = parseFloat(amount) || 0;
+                const rate = gstRate / 100;
+                
+                if (operation === 'add') {
+                    const gstAmount = numAmount * rate;
+                    const total = numAmount + gstAmount;
+                    return {
+                        original: numAmount.toFixed(2),
+                        gst: gstAmount.toFixed(2),
+                        total: total.toFixed(2)
+                    };
+                } else {
+                    const originalAmount = numAmount / (1 + rate);
+                    const gstAmount = numAmount - originalAmount;
+                    return {
+                        original: originalAmount.toFixed(2),
+                        gst: gstAmount.toFixed(2),
+                        total: numAmount.toFixed(2)
+                    };
+                }
+            };
+
+            const result = calculateGST();
+
+            return (
+                <div className={`calculator-card bg-white rounded-2xl shadow-2xl p-10 border-2 border-blue-200 ${darkMode ? 'dark-mode' : ''}`}>
+                    <h3 className="text-xl font-semibold mb-4">GST Calculator</h3>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Amount</label>
+                        <input
+                            type="number"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter amount"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">GST Rate (%)</label>
+                        <select
+                            value={gstRate}
+                            onChange={(e) => setGstRate(parseFloat(e.target.value))}
+                            className="w-full p-2 border rounded"
+                        >
+                            <option value="5">5%</option>
+                            <option value="12">12%</option>
+                            <option value="18">18%</option>
+                            <option value="28">28%</option>
+                        </select>
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Operation</label>
+                        <div className="flex space-x-4">
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    checked={operation === 'add'}
+                                    onChange={() => setOperation('add')}
+                                    className="mr-2"
+                                />
+                                Add GST
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    checked={operation === 'remove'}
+                                    onChange={() => setOperation('remove')}
+                                    className="mr-2"
+                                />
+                                Remove GST
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div className="mt-6 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                        <h4 className="font-medium mb-2">Results:</h4>
+                        <p>Original Amount: ₹{result.original}</p>
+                        <p>GST Amount: ₹{result.gst}</p>
+                        <p className="font-semibold">Total Amount: ₹{result.total}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // EMI Calculator Component
+        function EMICalculator({ darkMode }) {
+            const [principal, setPrincipal] = useState('');
+            const [interestRate, setInterestRate] = useState('');
+            const [tenure, setTenure] = useState('');
+            const [tenureType, setTenureType] = useState('years');
+
+            const calculateEMI = () => {
+                const p = parseFloat(principal) || 0;
+                const r = (parseFloat(interestRate) || 0) / 1200; // Monthly interest rate
+                let n = parseFloat(tenure) || 0;
+                
+                // Convert tenure to months if in years
+                if (tenureType === 'years') {
+                    n *= 12;
+                }
+                
+                if (r === 0) {
+                    return {
+                        emi: (p / n).toFixed(2),
+                        totalInterest: '0.00',
+                        totalPayment: p.toFixed(2)
+                    };
+                }
+                
+                const emi = p * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+                const totalPayment = emi * n;
+                const totalInterest = totalPayment - p;
+                
+                return {
+                    emi: emi.toFixed(2),
+                    totalInterest: totalInterest.toFixed(2),
+                    totalPayment: totalPayment.toFixed(2)
+                };
+            };
+
+            const result = calculateEMI();
+
+            return (
+                <div className={`calculator-card bg-white rounded-2xl shadow-2xl p-10 border-2 border-blue-200 ${darkMode ? 'dark-mode' : ''}`}>
+                    <h3 className="text-xl font-semibold mb-4">EMI Calculator</h3>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Loan Amount (₹)</label>
+                        <input
+                            type="number"
+                            value={principal}
+                            onChange={(e) => setPrincipal(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter loan amount"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Interest Rate (% p.a.)</label>
+                        <input
+                            type="number"
+                            value={interestRate}
+                            onChange={(e) => setInterestRate(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter interest rate"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Loan Tenure</label>
+                        <div className="flex">
+                            <input
+                                type="number"
+                                value={tenure}
+                                onChange={(e) => setTenure(e.target.value)}
+                                className="w-3/4 p-2 border rounded-l"
+                                placeholder="Enter tenure"
+                            />
+                            <select
+                                value={tenureType}
+                                onChange={(e) => setTenureType(e.target.value)}
+                                className="w-1/4 p-2 border rounded-r"
+                            >
+                                <option value="years">Years</option>
+                                <option value="months">Months</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div className="mt-6 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                        <h4 className="font-medium mb-2">Results:</h4>
+                        <p className="font-semibold">EMI: ₹{result.emi}</p>
+                        <p>Total Interest: ₹{result.totalInterest}</p>
+                        <p>Total Payment: ₹{result.totalPayment}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // Interest Calculator Component
+        function InterestCalculator({ darkMode }) {
+            const [principal, setPrincipal] = useState('');
+            const [interestRate, setInterestRate] = useState('');
+            const [time, setTime] = useState('');
+            const [timeType, setTimeType] = useState('years');
+            const [interestType, setInterestType] = useState('simple');
+
+            const calculateInterest = () => {
+                const p = parseFloat(principal) || 0;
+                const r = parseFloat(interestRate) || 0;
+                let t = parseFloat(time) || 0;
+                
+                // Convert time to years if in months
+                if (timeType === 'months') {
+                    t /= 12;
+                }
+                
+                if (interestType === 'simple') {
+                    const interest = (p * r * t) / 100;
+                    const total = p + interest;
+                    return {
+                        interest: interest.toFixed(2),
+                        total: total.toFixed(2)
+                    };
+                } else {
+                    // Compound interest
+                    const total = p * Math.pow(1 + (r / 100), t);
+                    const interest = total - p;
+                    return {
+                        interest: interest.toFixed(2),
+                        total: total.toFixed(2)
+                    };
+                }
+            };
+
+            const result = calculateInterest();
+
+            return (
+                <div className={`calculator-card bg-white rounded-2xl shadow-2xl p-10 border-2 border-blue-200 ${darkMode ? 'dark-mode' : ''}`}>
+                    <h3 className="text-xl font-semibold mb-4">Interest Calculator</h3>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Principal Amount (₹)</label>
+                        <input
+                            type="number"
+                            value={principal}
+                            onChange={(e) => setPrincipal(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter principal amount"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Interest Rate (% p.a.)</label>
+                        <input
+                            type="number"
+                            value={interestRate}
+                            onChange={(e) => setInterestRate(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter interest rate"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Time Period</label>
+                        <div className="flex">
+                            <input
+                                type="number"
+                                value={time}
+                                onChange={(e) => setTime(e.target.value)}
+                                className="w-3/4 p-2 border rounded-l"
+                                placeholder="Enter time period"
+                            />
+                            <select
+                                value={timeType}
+                                onChange={(e) => setTimeType(e.target.value)}
+                                className="w-1/4 p-2 border rounded-r"
+                            >
+                                <option value="years">Years</option>
+                                <option value="months">Months</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Interest Type</label>
+                        <div className="flex space-x-4">
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    checked={interestType === 'simple'}
+                                    onChange={() => setInterestType('simple')}
+                                    className="mr-2"
+                                />
+                                Simple
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    checked={interestType === 'compound'}
+                                    onChange={() => setInterestType('compound')}
+                                    className="mr-2"
+                                />
+                                Compound
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div className="mt-6 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                        <h4 className="font-medium mb-2">Results:</h4>
+                        <p>Interest Amount: ₹{result.interest}</p>
+                        <p className="font-semibold">Total Amount: ₹{result.total}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // Tax Calculator Component (Indian Slabs)
+        function TaxCalculator({ darkMode }) {
+            const [income, setIncome] = useState('');
+            const [ageGroup, setAgeGroup] = useState('below60');
+            const [deductions, setDeductions] = useState('');
+
+            const calculateTax = () => {
+                const taxableIncome = Math.max(0, (parseFloat(income) || 0) - (parseFloat(deductions) || 0));
+                
+                let tax = 0;
+                let cess = 0;
+                let rebate = 0;
+                let finalTax = 0;
+                
+                if (ageGroup === 'below60') {
+                    // FY 2023-24 (AY 2024-25) - New Tax Regime (Default)
+                    if (taxableIncome <= 300000) {
+                        tax = 0;
+                        rebate = 0;
+                    } else if (taxableIncome <= 600000) {
+                        tax = 0;
+                        rebate = taxableIncome <= 700000 ? 25000 : 0;
+                    } else if (taxableIncome <= 900000) {
+                        tax = (taxableIncome - 600000) * 0.05;
+                    } else if (taxableIncome <= 1200000) {
+                        tax = 15000 + (taxableIncome - 900000) * 0.10;
+                    } else if (taxableIncome <= 1500000) {
+                        tax = 45000 + (taxableIncome - 1200000) * 0.15;
+                    } else {
+                        tax = 90000 + (taxableIncome - 1500000) * 0.20;
+                    }
+                } else if (ageGroup === '60to80') {
+                    // Senior Citizen
+                    if (taxableIncome <= 300000) {
+                        tax = 0;
+                    } else if (taxableIncome <= 500000) {
+                        tax = (taxableIncome - 300000) * 0.05;
+                    } else if (taxableIncome <= 1000000) {
+                        tax = 10000 + (taxableIncome - 500000) * 0.20;
+                    } else {
+                        tax = 110000 + (taxableIncome - 1000000) * 0.30;
+                    }
+                } else {
+                    // Super Senior Citizen (80+)
+                    if (taxableIncome <= 500000) {
+                        tax = 0;
+                    } else if (taxableIncome <= 1000000) {
+                        tax = (taxableIncome - 500000) * 0.20;
+                    } else {
+                        tax = 100000 + (taxableIncome - 1000000) * 0.30;
+                    }
+                }
+                
+                // Apply rebate if applicable
+                tax = Math.max(0, tax - rebate);
+                
+                // Health and education cess (4%)
+                cess = tax * 0.04;
+                finalTax = tax + cess;
+                
+                return {
+                    taxableIncome: taxableIncome.toFixed(2),
+                    tax: tax.toFixed(2),
+                    cess: cess.toFixed(2),
+                    finalTax: finalTax.toFixed(2),
+                    rebate: rebate.toFixed(2)
+                };
+            };
+
+            const result = calculateTax();
+
+            return (
+                <div className={`calculator-card bg-white rounded-2xl shadow-2xl p-10 border-2 border-blue-200 ${darkMode ? 'dark-mode' : ''}`}>
+                    <h3 className="text-xl font-semibold mb-4">Income Tax Calculator (India)</h3>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Annual Income (₹)</label>
+                        <input
+                            type="number"
+                            value={income}
+                            onChange={(e) => setIncome(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter your annual income"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Deductions (₹)</label>
+                        <input
+                            type="number"
+                            value={deductions}
+                            onChange={(e) => setDeductions(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter deductions (80C, 80D, etc.)"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Age Group</label>
+                        <select
+                            value={ageGroup}
+                            onChange={(e) => setAgeGroup(e.target.value)}
+                            className="w-full p-2 border rounded"
+                        >
+                            <option value="below60">Below 60 years</option>
+                            <option value="60to80">60 to 80 years</option>
+                            <option value="above80">Above 80 years</option>
+                        </select>
+                    </div>
+                    
+                    <div className="mt-6 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                        <h4 className="font-medium mb-2">Tax Calculation:</h4>
+                        <p>Taxable Income: ₹{result.taxableIncome}</p>
+                        <p>Income Tax: ₹{result.tax}</p>
+                        <p>Rebate: ₹{result.rebate}</p>
+                        <p>Health & Education Cess (4%): ₹{result.cess}</p>
+                        <p className="font-semibold">Total Tax Payable: ₹{result.finalTax}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // Currency Converter Component
+        function CurrencyConverter({ darkMode, exchangeRates }) {
+            const [amount, setAmount] = useState('');
+            const [fromCurrency, setFromCurrency] = useState('USD');
+            const [toCurrency, setToCurrency] = useState('INR');
+            const [convertedAmount, setConvertedAmount] = useState(0);
+
+            useEffect(() => {
+                if (amount && exchangeRates && fromCurrency && toCurrency) {
+                    const rate = exchangeRates[toCurrency] / exchangeRates[fromCurrency];
+                    setConvertedAmount((parseFloat(amount) * rate).toFixed(2));
+                }
+            }, [amount, fromCurrency, toCurrency, exchangeRates]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-2xl shadow-2xl p-10 border-2 border-blue-200 ${darkMode ? 'dark-mode' : ''}`}>
+                    <h3 className="text-xl font-semibold mb-4">Currency Converter</h3>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Amount</label>
+                        <input
+                            type="number"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter amount"
+                        />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label className="block mb-2">From</label>
+                            <select
+                                value={fromCurrency}
+                                onChange={(e) => setFromCurrency(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            >
+                                {exchangeRates && Object.keys(exchangeRates).map(currency => (
+                                    <option key={`from-${currency}`} value={currency}>{currency}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block mb-2">To</label>
+                            <select
+                                value={toCurrency}
+                                onChange={(e) => setToCurrency(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            >
+                                {exchangeRates && Object.keys(exchangeRates).map(currency => (
+                                    <option key={`to-${currency}`} value={currency}>{currency}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div className="mt-6 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                        <h4 className="font-medium mb-2">Converted Amount:</h4>
+                        <p className="text-2xl font-bold">
+                            {amount || '0'} {fromCurrency} = {convertedAmount} {toCurrency}
+                        </p>
+                        {exchangeRates && (
+                            <p className="text-sm mt-2">
+                                1 {fromCurrency} = {(exchangeRates[toCurrency] / exchangeRates[fromCurrency]).toFixed(6)} {toCurrency}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Profit Margin Calculator Component
+        function ProfitMarginCalculator({ darkMode }) {
+            const [cost, setCost] = useState('');
+            const [sellingPrice, setSellingPrice] = useState('');
+            const [profit, setProfit] = useState('');
+            const [margin, setMargin] = useState('');
+            const [markup, setMarkup] = useState('');
+            const [activeField, setActiveField] = useState('cost');
+
+            useEffect(() => {
+                const numCost = parseFloat(cost) || 0;
+                const numSelling = parseFloat(sellingPrice) || 0;
+                const numProfit = parseFloat(profit) || 0;
+                const numMargin = parseFloat(margin) || 0;
+                const numMarkup = parseFloat(markup) || 0;
+
+                if (activeField === 'cost' && numCost && numSelling) {
+                    const calcProfit = numSelling - numCost;
+                    const calcMargin = (calcProfit / numSelling) * 100;
+                    const calcMarkup = (calcProfit / numCost) * 100;
+                    setProfit(calcProfit.toFixed(2));
+                    setMargin(calcMargin.toFixed(2));
+                    setMarkup(calcMarkup.toFixed(2));
+                } else if (activeField === 'selling' && numCost && numSelling) {
+                    const calcProfit = numSelling - numCost;
+                    const calcMargin = (calcProfit / numSelling) * 100;
+                    const calcMarkup = (calcProfit / numCost) * 100;
+                    setProfit(calcProfit.toFixed(2));
+                    setMargin(calcMargin.toFixed(2));
+                    setMarkup(calcMarkup.toFixed(2));
+                } else if (activeField === 'profit' && numCost && numProfit) {
+                    const calcSelling = numCost + numProfit;
+                    const calcMargin = (numProfit / calcSelling) * 100;
+                    const calcMarkup = (numProfit / numCost) * 100;
+                    setSellingPrice(calcSelling.toFixed(2));
+                    setMargin(calcMargin.toFixed(2));
+                    setMarkup(calcMarkup.toFixed(2));
+                } else if (activeField === 'margin' && numCost && numMargin) {
+                    const calcSelling = numCost / (1 - (numMargin / 100));
+                    const calcProfit = calcSelling - numCost;
+                    const calcMarkup = (calcProfit / numCost) * 100;
+                    setSellingPrice(calcSelling.toFixed(2));
+                    setProfit(calcProfit.toFixed(2));
+                    setMarkup(calcMarkup.toFixed(2));
+                } else if (activeField === 'markup' && numCost && numMarkup) {
+                    const calcSelling = numCost * (1 + (numMarkup / 100));
+                    const calcProfit = calcSelling - numCost;
+                    const calcMargin = (calcProfit / calcSelling) * 100;
+                    setSellingPrice(calcSelling.toFixed(2));
+                    setProfit(calcProfit.toFixed(2));
+                    setMargin(calcMargin.toFixed(2));
+                }
+            }, [cost, sellingPrice, profit, margin, markup, activeField]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-2xl shadow-2xl p-10 border-2 border-blue-200 ${darkMode ? 'dark-mode' : ''}`}>
+                    <h3 className="text-xl font-semibold mb-4">Profit Margin Calculator</h3>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Cost Price (₹)</label>
+                        <input
+                            type="number"
+                            value={cost}
+                            onChange={(e) => {
+                                setCost(e.target.value);
+                                setActiveField('cost');
+                            }}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter cost price"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Selling Price (₹)</label>
+                        <input
+                            type="number"
+                            value={sellingPrice}
+                            onChange={(e) => {
+                                setSellingPrice(e.target.value);
+                                setActiveField('selling');
+                            }}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter selling price"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Profit (₹)</label>
+                        <input
+                            type="number"
+                            value={profit}
+                            onChange={(e) => {
+                                setProfit(e.target.value);
+                                setActiveField('profit');
+                            }}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter profit amount"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Margin (%)</label>
+                        <input
+                            type="number"
+                            value={margin}
+                            onChange={(e) => {
+                                setMargin(e.target.value);
+                                setActiveField('margin');
+                            }}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter profit margin"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Markup (%)</label>
+                        <input
+                            type="number"
+                            value={markup}
+                            onChange={(e) => {
+                                setMarkup(e.target.value);
+                                setActiveField('markup');
+                            }}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter markup percentage"
+                        />
+                    </div>
+                    
+                    <div className="mt-2 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                            Tip: Fill any two fields to calculate the others.
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        // Discount Calculator Component
+        function DiscountCalculator({ darkMode }) {
+            const [originalPrice, setOriginalPrice] = useState('');
+            const [discountPercent, setDiscountPercent] = useState('');
+            const [finalPrice, setFinalPrice] = useState('');
+            const [savedAmount, setSavedAmount] = useState('');
+
+            useEffect(() => {
+                const numOriginal = parseFloat(originalPrice) || 0;
+                const numDiscount = parseFloat(discountPercent) || 0;
+                
+                if (numOriginal && numDiscount) {
+                    const saved = numOriginal * (numDiscount / 100);
+                    const final = numOriginal - saved;
+                    setSavedAmount(saved.toFixed(2));
+                    setFinalPrice(final.toFixed(2));
+                }
+            }, [originalPrice, discountPercent]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-2xl shadow-2xl p-10 border-2 border-blue-200 ${darkMode ? 'dark-mode' : ''}`}>
+                    <h3 className="text-xl font-semibold mb-4">Discount Calculator</h3>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Original Price (₹)</label>
+                        <input
+                            type="number"
+                            value={originalPrice}
+                            onChange={(e) => setOriginalPrice(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter original price"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Discount Percentage (%)</label>
+                        <input
+                            type="number"
+                            value={discountPercent}
+                            onChange={(e) => setDiscountPercent(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter discount percentage"
+                        />
+                    </div>
+                    
+                    <div className="mt-6 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                        <h4 className="font-medium mb-2">Results:</h4>
+                        <p>You Save: ₹{savedAmount}</p>
+                        <p className="font-semibold">Final Price: ₹{finalPrice}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // Tip Calculator Component
+        function TipCalculator({ darkMode }) {
+            const [billAmount, setBillAmount] = useState('');
+            const [tipPercent, setTipPercent] = useState(15);
+            const [people, setPeople] = useState(1);
+            const [roundUp, setRoundUp] = useState(false);
+
+            const calculateTip = () => {
+                const bill = parseFloat(billAmount) || 0;
+                const tip = bill * (tipPercent / 100);
+                let total = bill + tip;
+                let perPerson = total / people;
+                
+                if (roundUp) {
+                    total = Math.ceil(total);
+                    perPerson = Math.ceil(perPerson);
+                }
+                
+                return {
+                    tip: tip.toFixed(2),
+                    total: total.toFixed(2),
+                    perPerson: perPerson.toFixed(2)
+                };
+            };
+
+            const result = calculateTip();
+
+            return (
+                <div className={`calculator-card bg-white rounded-2xl shadow-2xl p-10 border-2 border-blue-200 ${darkMode ? 'dark-mode' : ''}`}>
+                    <h3 className="text-xl font-semibold mb-4">Tip Calculator</h3>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Bill Amount (₹)</label>
+                        <input
+                            type="number"
+                            value={billAmount}
+                            onChange={(e) => setBillAmount(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter bill amount"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Tip Percentage</label>
+                        <div className="flex space-x-2">
+                            {[10, 15, 18, 20].map(percent => (
+                                <button
+                                    key={`tip-${percent}`}
+                                    onClick={() => setTipPercent(percent)}
+                                    className={`px-3 py-1 rounded ${tipPercent === percent ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
+                                >
+                                    {percent}%
+                                </button>
+                            ))}
+                            <input
+                                type="number"
+                                value={tipPercent}
+                                onChange={(e) => setTipPercent(parseFloat(e.target.value) || 0)}
+                                className="w-16 p-1 border rounded text-center"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Number of People</label>
+                        <input
+                            type="number"
+                            value={people}
+                            onChange={(e) => setPeople(Math.max(1, parseInt(e.target.value) || 1))}
+                            min="1"
+                            className="w-full p-2 border rounded"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={roundUp}
+                                onChange={(e) => setRoundUp(e.target.checked)}
+                                className="mr-2"
+                            />
+                            Round up to nearest rupee
+                        </label>
+                    </div>
+                    
+                    <div className="mt-6 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                        <h4 className="font-medium mb-2">Results:</h4>
+                        <p>Tip Amount: ₹{result.tip}</p>
+                        <p className="font-semibold">Total Amount: ₹{result.total}</p>
+                        <p>Per Person: ₹{result.perPerson}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // Salary Calculator Component
+        function SalaryCalculator({ darkMode }) {
+            const [basicSalary, setBasicSalary] = useState('');
+            const [hra, setHra] = useState('');
+            const [da, setDa] = useState('');
+            const [specialAllowances, setSpecialAllowances] = useState('');
+            const [bonus, setBonus] = useState('');
+            const [deductions, setDeductions] = useState('');
+            const [taxDeductions, setTaxDeductions] = useState('');
+
+            const calculateSalary = () => {
+                const basic = parseFloat(basicSalary) || 0;
+                const hraAmount = parseFloat(hra) || 0;
+                const daAmount = parseFloat(da) || 0;
+                const allowances = parseFloat(specialAllowances) || 0;
+                const bonusAmount = parseFloat(bonus) || 0;
+                const totalDeductions = (parseFloat(deductions) || 0) + (parseFloat(taxDeductions) || 0);
+                
+                const grossSalary = basic + hraAmount + daAmount + allowances + bonusAmount;
+                const netSalary = grossSalary - totalDeductions;
+                
+                return {
+                    gross: grossSalary.toFixed(2),
+                    deductions: totalDeductions.toFixed(2),
+                    net: netSalary.toFixed(2)
+                };
+            };
+
+            const result = calculateSalary();
+
+            return (
+                <div className={`calculator-card bg-white rounded-2xl shadow-2xl p-10 border-2 border-blue-200 ${darkMode ? 'dark-mode' : ''}`}>
+                    <h3 className="text-xl font-semibold mb-4">Salary Calculator</h3>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Basic Salary (₹)</label>
+                        <input
+                            type="number"
+                            value={basicSalary}
+                            onChange={(e) => setBasicSalary(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter basic salary"
+                        />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label className="block mb-2">HRA (₹)</label>
+                            <input
+                                type="number"
+                                value={hra}
+                                onChange={(e) => setHra(e.target.value)}
+                                className="w-full p-2 border rounded"
+                                placeholder="Enter HRA"
+                            />
+                        </div>
+                        <div>
+                            <label className="block mb-2">DA (₹)</label>
+                            <input
+                                type="number"
+                                value={da}
+                                onChange={(e) => setDa(e.target.value)}
+                                className="w-full p-2 border rounded"
+                                placeholder="Enter DA"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label className="block mb-2">Special Allowances (₹)</label>
+                            <input
+                                type="number"
+                                value={specialAllowances}
+                                onChange={(e) => setSpecialAllowances(e.target.value)}
+                                className="w-full p-2 border rounded"
+                                placeholder="Enter allowances"
+                            />
+                        </div>
+                        <div>
+                            <label className="block mb-2">Bonus (₹)</label>
+                            <input
+                                type="number"
+                                value={bonus}
+                                onChange={(e) => setBonus(e.target.value)}
+                                className="w-full p-2 border rounded"
+                                placeholder="Enter bonus"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label className="block mb-2">Other Deductions (₹)</label>
+                            <input
+                                type="number"
+                                value={deductions}
+                                onChange={(e) => setDeductions(e.target.value)}
+                                className="w-full p-2 border rounded"
+                                placeholder="Enter deductions"
+                            />
+                        </div>
+                        <div>
+                            <label className="block mb-2">Tax Deductions (₹)</label>
+                            <input
+                                type="number"
+                                value={taxDeductions}
+                                onChange={(e) => setTaxDeductions(e.target.value)}
+                                className="w-full p-2 border rounded"
+                                placeholder="Enter tax deductions"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="mt-6 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                        <h4 className="font-medium mb-2">Salary Calculation:</h4>
+                        <p>Gross Salary: ₹{result.gross}</p>
+                        <p>Total Deductions: ₹{result.deductions}</p>
+                        <p className="font-semibold">Net Salary: ₹{result.net}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // Investment Calculator Component
+        function InvestmentCalculator({ darkMode }) {
+            const [principal, setPrincipal] = useState('');
+            const [interestRate, setInterestRate] = useState('');
+            const [time, setTime] = useState('');
+            const [timeType, setTimeType] = useState('years');
+            const [interestType, setInterestType] = useState('simple');
+            const [frequency, setFrequency] = useState('annually'); // 'annually', 'semi-annually', 'quarterly', 'monthly'
+
+            const calculateInvestment = () => {
+                const p = parseFloat(principal) || 0;
+                const r = parseFloat(interestRate) || 0;
+                let t = parseFloat(time) || 0;
+                
+                // Convert time to years if in months
+                if (timeType === 'months') {
+                    t /= 12;
+                }
+                
+                if (interestType === 'simple') {
+                    const interest = (p * r * t) / 100;
+                    const total = p + interest;
+                    return {
+                        interest: interest.toFixed(2),
+                        total: total.toFixed(2)
+                    };
+                } else {
+                    // Compound interest
+                    const total = p * Math.pow(1 + (r / 100), t);
+                    const interest = total - p;
+                    return {
+                        interest: interest.toFixed(2),
+                        total: total.toFixed(2)
+                    };
+                }
+            };
+
+            const result = calculateInvestment();
+
+            return (
+                <div className={`calculator-card bg-white rounded-2xl shadow-2xl p-10 border-2 border-blue-200 ${darkMode ? 'dark-mode' : ''}`}>
+                    <h3 className="text-xl font-semibold mb-4">Investment Calculator</h3>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Principal Amount (₹)</label>
+                        <input
+                            type="number"
+                            value={principal}
+                            onChange={(e) => setPrincipal(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter principal amount"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Interest Rate (% p.a.)</label>
+                        <input
+                            type="number"
+                            value={interestRate}
+                            onChange={(e) => setInterestRate(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter interest rate"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Time Period</label>
+                        <div className="flex">
+                            <input
+                                type="number"
+                                value={time}
+                                onChange={(e) => setTime(e.target.value)}
+                                className="w-3/4 p-2 border rounded-l"
+                                placeholder="Enter time period"
+                            />
+                            <select
+                                value={timeType}
+                                onChange={(e) => setTimeType(e.target.value)}
+                                className="w-1/4 p-2 border rounded-r"
+                            >
+                                <option value="years">Years</option>
+                                <option value="months">Months</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Interest Type</label>
+                        <div className="flex space-x-4">
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    checked={interestType === 'simple'}
+                                    onChange={() => setInterestType('simple')}
+                                    className="mr-2"
+                                />
+                                Simple
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    checked={interestType === 'compound'}
+                                    onChange={() => setInterestType('compound')}
+                                    className="mr-2"
+                                />
+                                Compound
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div className="mt-6 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                        <h4 className="font-medium mb-2">Results:</h4>
+                        <p>Interest Amount: ₹{result.interest}</p>
+                        <p className="font-semibold">Total Amount: ₹{result.total}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // Retirement Calculator Component
+        function RetirementCalculator({ darkMode }) {
+            const [currentAge, setCurrentAge] = useState('');
+            const [retirementAge, setRetirementAge] = useState('');
+            const [monthlySavings, setMonthlySavings] = useState('');
+            const [expectedReturnRate, setExpectedReturnRate] = useState('');
+            const [inflationRate, setInflationRate] = useState('');
+
+            const calculateYearlyValue = (principal, rate, time, frequency) => {
+                let r = rate / 100;
+                let n = 0;
+                let t = time;
+
+                if (frequency === 'annually') {
+                    n = 1;
+                } else if (frequency === 'semi-annually') {
+                    n = 2;
+                } else if (frequency === 'quarterly') {
+                    n = 4;
+                } else if (frequency === 'monthly') {
+                    n = 12;
+                }
+
+                if (frequency === 'annually' || frequency === 'semi-annually') {
+                    r = r / n;
+                    t = t * n;
+                }
+
+                if (rate === 0) {
+                    return principal;
+                }
+
+                return principal * Math.pow(1 + r, t);
+            };
+
+            const calculateRetirement = () => {
+                const currentAgeNum = parseFloat(currentAge) || 0;
+                const retirementAgeNum = parseFloat(retirementAge) || 0;
+                const monthlySavingsNum = parseFloat(monthlySavings) || 0;
+                const expectedReturnRateNum = parseFloat(expectedReturnRate) || 0;
+                const inflationRateNum = parseFloat(inflationRate) || 0;
+
+                const yearsUntilRetirement = retirementAgeNum - currentAgeNum;
+                const totalSavings = monthlySavingsNum * 12 * yearsUntilRetirement;
+
+                const futureValue = calculateYearlyValue(totalSavings, expectedReturnRateNum, yearsUntilRetirement, 'annually');
+                const futureValueAfterInflation = calculateYearlyValue(totalSavings, expectedReturnRateNum - inflationRateNum, yearsUntilRetirement, 'annually');
+
+                return {
+                    totalSavings: totalSavings.toFixed(2),
+                    futureValue: futureValue.toFixed(2),
+                    futureValueAfterInflation: futureValueAfterInflation.toFixed(2)
+                };
+            };
+
+            const result = calculateRetirement();
+
+            return (
+                <div className={`calculator-card bg-white rounded-2xl shadow-2xl p-10 border-2 border-blue-200 ${darkMode ? 'dark-mode' : ''}`}>
+                    <h3 className="text-xl font-semibold mb-4">Retirement Calculator</h3>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Current Age</label>
+                        <input
+                            type="number"
+                            value={currentAge}
+                            onChange={(e) => setCurrentAge(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter current age"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Retirement Age</label>
+                        <input
+                            type="number"
+                            value={retirementAge}
+                            onChange={(e) => setRetirementAge(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter retirement age"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Monthly Savings (₹)</label>
+                        <input
+                            type="number"
+                            value={monthlySavings}
+                            onChange={(e) => setMonthlySavings(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter monthly savings"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Expected Return Rate (% p.a.)</label>
+                        <input
+                            type="number"
+                            value={expectedReturnRate}
+                            onChange={(e) => setExpectedReturnRate(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter expected return rate"
+                        />
+                    </div>
+                    
+                    <div className="mb-4">
+                        <label className="block mb-2">Inflation Rate (% p.a.)</label>
+                        <input
+                            type="number"
+                            value={inflationRate}
+                            onChange={(e) => setInflationRate(e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter inflation rate"
+                        />
+                    </div>
+                    
+                    <div className="mt-6 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                        <h4 className="font-medium mb-2">Results:</h4>
+                        <p>Total Savings: ₹{result.totalSavings}</p>
+                        <p>Future Value (No Inflation): ₹{result.futureValue}</p>
+                        <p>Future Value (After Inflation): ₹{result.futureValueAfterInflation}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

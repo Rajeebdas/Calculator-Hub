@@ -1,0 +1,1981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathTools - Educational Math Calculators</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.7.0/math.min.js"></script>
+    <style>
+        .calculator-card {
+            transition: all 0.3s ease;
+            max-width: 640px;
+            min-width: 400px;
+            padding: 2.5rem 2.5rem;
+            font-size: 1.18rem;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.13), 0 1.5px 6px rgba(0,0,0,0.10);
+        }
+        .calculator-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .dark-mode {
+            background-color: #1a202c;
+            color: #f7fafc;
+        }
+        .dark-mode .calculator-card {
+            background-color: #2d3748;
+            border-color: #4a5568;
+        }
+        .dark-mode input, .dark-mode select, .dark-mode textarea {
+            background-color: #4a5568;
+            color: #f7fafc;
+            border-color: #718096;
+        }
+        .dark-mode input::placeholder {
+            color: #cbd5e0;
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background-color: #4299e1;
+            color: white;
+        }
+        .dark-mode .tab-button.active {
+            background-color: #2b6cb0;
+        }
+        .math-display {
+            background-color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+        .dark-mode .math-display {
+            background-color: #2d3748;
+        }
+        .matrix-input {
+            display: grid;
+            gap: 0.5rem;
+        }
+        .matrix-input input {
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        function App() {
+            const [darkMode, setDarkMode] = useState(false);
+            const [activeCalculator, setActiveCalculator] = useState('percentage');
+            const calculators = [
+                { key: 'percentage', label: 'Percentage Calculator', component: PercentageCalculator },
+                { key: 'fraction', label: 'Fraction Calculator', component: FractionCalculator },
+                { key: 'area', label: 'Area & Perimeter Calculator', component: AreaPerimeterCalculator },
+                { key: 'unit', label: 'Unit Converter', component: UnitConverter },
+                { key: 'equation', label: 'Equation Solver', component: EquationSolver },
+                { key: 'mean', label: 'Mean, Median, Mode Calculator', component: StatisticsCalculator },
+                { key: 'matrix', label: 'Matrix Calculator', component: MatrixCalculator },
+                { key: 'probability', label: 'Probability Calculator', component: ProbabilityCalculator },
+                { key: 'gcf', label: 'GCF/LCM Calculator', component: GCFLCMCalculator },
+                { key: 'date', label: 'Date Calculator', component: DateCalculator },
+                { key: 'age', label: 'Age Calculator', component: AgeCalculator },
+                { key: 'speed', label: 'Speed Calculator', component: SpeedCalculator },
+            ];
+            // Toggle dark mode
+            const toggleDarkMode = () => {
+                setDarkMode(!darkMode);
+                document.body.classList.toggle('dark-mode');
+            };
+            return (
+                <div className={`min-h-screen ${darkMode ? 'dark-mode' : ''}`}>
+                    {/* Navbar */}
+                    <nav className="bg-blue-600 text-white p-4 shadow-md">
+                        <div className="container mx-auto flex justify-between items-center">
+                            <h1 className="text-2xl font-bold">MathTools</h1>
+                            <div className="flex items-center space-x-4">
+                                <button 
+                                    onClick={toggleDarkMode}
+                                    className="px-3 py-1 rounded bg-blue-700 hover:bg-blue-800 transition"
+                                >
+                                    {darkMode ? '☀️ Light' : '🌙 Dark'}
+                                </button>
+                            </div>
+                        </div>
+                    </nav>
+                    {/* Main Content */}
+                    <main className="container mx-auto p-4">
+                        <h2 className="text-4xl font-extrabold mb-8 text-center tracking-tight">Math & School Calculators</h2>
+                        {/* Calculator Buttons */}
+                        <div className="flex flex-wrap justify-center mb-8 gap-2">
+                          {calculators.map(calc => (
+                            <button
+                              key={calc.key}
+                              onClick={() => setActiveCalculator(calc.key)}
+                              className={`tab-button px-4 py-2 rounded ${activeCalculator === calc.key ? 'active' : 'bg-gray-200 dark:bg-gray-700'}`}
+                            >
+                              {calc.label}
+                            </button>
+                          ))}
+                        </div>
+                        {/* Show Only Selected Calculator */}
+                        <div className="flex justify-center">
+                          {calculators.map(calc =>
+                            activeCalculator === calc.key
+                              ? React.createElement(calc.component, { darkMode })
+                              : null
+                          )}
+                        </div>
+                    </main>
+                    {/* Footer */}
+                    <footer className="bg-gray-800 text-white p-6 mt-10">
+                        <div className="container mx-auto">
+                            <div className="flex flex-col md:flex-row justify-between items-center">
+                                <div className="mb-4 md:mb-0">
+                                    <h3 className="text-xl font-bold mb-2">MathTools</h3>
+                                    <p className="text-gray-400">Educational math calculators for students and teachers</p>
+                                </div>
+                                <div className="text-center md:text-right">
+                                    <p className="text-gray-400 mb-2">© {new Date().getFullYear()} MathTools. All rights reserved.</p>
+                                    <p className="text-gray-400 text-sm">
+                                        Note: Calculations are for educational purposes. Verify results for critical applications.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        // Percentage Calculator Component
+        function PercentageCalculator({ darkMode }) {
+            const [operation, setOperation] = useState('percentOf');
+            const [x, setX] = useState('');
+            const [y, setY] = useState('');
+            const [initialValue, setInitialValue] = useState('');
+            const [finalValue, setFinalValue] = useState('');
+            const [percentage, setPercentage] = useState('');
+            const [result, setResult] = useState(null);
+
+            const calculatePercentage = () => {
+                if (operation === 'percentOf') {
+                    const numX = parseFloat(x) || 0;
+                    const numY = parseFloat(y) || 1;
+                    const res = (numX / 100) * numY;
+                    setResult({
+                        text: `${x}% of ${y} = ${res.toFixed(4)}`,
+                        math: `${x}\\% \\text{ of } ${y} = ${res.toFixed(4)}`
+                    });
+                } else if (operation === 'change') {
+                    const initial = parseFloat(initialValue) || 0;
+                    const final = parseFloat(finalValue) || 0;
+                    const change = ((final - initial) / Math.abs(initial)) * 100;
+                    setResult({
+                        text: `Change from ${initial} to ${final} = ${change.toFixed(2)}%`,
+                        math: `\\text{Change from } ${initial} \\text{ to } ${final} = ${change.toFixed(2)}\\%`
+                    });
+                } else if (operation === 'increaseDecrease') {
+                    const num = parseFloat(initialValue) || 0;
+                    const percent = parseFloat(percentage) || 0;
+                    const change = num * (percent / 100);
+                    const final = percent >= 0 ? num + change : num - Math.abs(change);
+                    setResult({
+                        text: `${percent >= 0 ? 'Increase' : 'Decrease'} ${initialValue} by ${Math.abs(percent)}% = ${final.toFixed(4)}`,
+                        math: `${percent >= 0 ? 'Increase' : 'Decrease'} ${initialValue} \\text{ by } ${Math.abs(percent)}\\% = ${final.toFixed(4)}`
+                    });
+                }
+            };
+
+            useEffect(() => {
+                calculatePercentage();
+            }, [operation, x, y, initialValue, finalValue, percentage]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden ${darkMode ? 'dark-mode' : ''}`}>
+                    <div className="p-4 border-t">
+                        <div className="mb-4">
+                            <label className="block mb-2">Operation</label>
+                            <select
+                                value={operation}
+                                onChange={(e) => setOperation(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            >
+                                <option value="percentOf">What is X% of Y?</option>
+                                <option value="change">Percentage Change (Initial → Final)</option>
+                                <option value="increaseDecrease">Increase/Decrease by X%</option>
+                            </select>
+                        </div>
+                        
+                        {operation === 'percentOf' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block mb-2">Percentage (X%)</label>
+                                    <input
+                                        type="number"
+                                        value={x}
+                                        onChange={(e) => setX(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                        placeholder="Enter percentage"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block mb-2">Of Number (Y)</label>
+                                    <input
+                                        type="number"
+                                        value={y}
+                                        onChange={(e) => setY(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                        placeholder="Enter number"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        
+                        {operation === 'change' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block mb-2">Initial Value</label>
+                                    <input
+                                        type="number"
+                                        value={initialValue}
+                                        onChange={(e) => setInitialValue(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                        placeholder="Enter initial value"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block mb-2">Final Value</label>
+                                    <input
+                                        type="number"
+                                        value={finalValue}
+                                        onChange={(e) => setFinalValue(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                        placeholder="Enter final value"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        
+                        {operation === 'increaseDecrease' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block mb-2">Initial Value</label>
+                                    <input
+                                        type="number"
+                                        value={initialValue}
+                                        onChange={(e) => setInitialValue(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                        placeholder="Enter initial value"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block mb-2">Percentage (+/-)</label>
+                                    <input
+                                        type="number"
+                                        value={percentage}
+                                        onChange={(e) => setPercentage(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                        placeholder="Enter percentage"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        
+                        {result && (
+                            <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                                <h4 className="font-medium mb-2">Result:</h4>
+                                <p>{result.text}</p>
+                            </div>
+                        )}
+                        
+                        <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+                            <p>Tip: Enter values in any two fields to calculate the third.</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Fraction Calculator Component
+        function FractionCalculator({ darkMode }) {
+            const [operation, setOperation] = useState('add');
+            const [numerator1, setNumerator1] = useState('');
+            const [denominator1, setDenominator1] = useState('1');
+            const [numerator2, setNumerator2] = useState('');
+            const [denominator2, setDenominator2] = useState('1');
+            const [result, setResult] = useState(null);
+
+            const calculateFraction = () => {
+                const num1 = parseFloat(numerator1) || 0;
+                const den1 = parseFloat(denominator1) || 1;
+                const num2 = parseFloat(numerator2) || 0;
+                const den2 = parseFloat(denominator2) || 1;
+                
+                let resNum, resDen;
+                
+                switch (operation) {
+                    case 'add':
+                        resNum = (num1 * den2) + (num2 * den1);
+                        resDen = den1 * den2;
+                        break;
+                    case 'subtract':
+                        resNum = (num1 * den2) - (num2 * den1);
+                        resDen = den1 * den2;
+                        break;
+                    case 'multiply':
+                        resNum = num1 * num2;
+                        resDen = den1 * den2;
+                        break;
+                    case 'divide':
+                        resNum = num1 * den2;
+                        resDen = den1 * num2;
+                        break;
+                    default:
+                        return;
+                }
+                
+                // Simplify the fraction
+                const gcd = (a, b) => b ? gcd(b, a % b) : a;
+                const divisor = gcd(Math.abs(resNum), Math.abs(resDen));
+                const simplifiedNum = resNum / divisor;
+                const simplifiedDen = resDen / divisor;
+                
+                const decimalValue = resNum / resDen;
+                
+                setResult({
+                    fraction: `${simplifiedNum}/${simplifiedDen}`,
+                    decimal: decimalValue.toFixed(6),
+                    operationSymbol: 
+                        operation === 'add' ? '+' : 
+                        operation === 'subtract' ? '−' : 
+                        operation === 'multiply' ? '×' : '÷'
+                });
+            };
+
+            useEffect(() => {
+                calculateFraction();
+            }, [operation, numerator1, denominator1, numerator2, denominator2]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden ${darkMode ? 'dark-mode' : ''}`}>
+                    <div className="p-4 border-t">
+                        <div className="mb-4">
+                            <label className="block mb-2">Operation</label>
+                            <select
+                                value={operation}
+                                onChange={(e) => setOperation(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            >
+                                <option value="add">Addition (+)</option>
+                                <option value="subtract">Subtraction (−)</option>
+                                <option value="multiply">Multiplication (×)</option>
+                                <option value="divide">Division (÷)</option>
+                            </select>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-4 mb-4 items-end">
+                            <div>
+                                <label className="block mb-2">Numerator 1</label>
+                                <input
+                                    type="number"
+                                    value={numerator1}
+                                    onChange={(e) => setNumerator1(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                    placeholder="Numerator"
+                                />
+                            </div>
+                            <div>
+                                <label className="block mb-2">Denominator 1</label>
+                                <input
+                                    type="number"
+                                    value={denominator1}
+                                    onChange={(e) => setDenominator1(e.target.value || '1')}
+                                    className="w-full p-2 border rounded"
+                                    placeholder="Denominator"
+                                />
+                            </div>
+                            <div className="text-center text-xl">
+                                {operation === 'add' ? '+' : 
+                                 operation === 'subtract' ? '−' : 
+                                 operation === 'multiply' ? '×' : '÷'}
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-4 mb-6 items-end">
+                            <div>
+                                <label className="block mb-2">Numerator 2</label>
+                                <input
+                                    type="number"
+                                    value={numerator2}
+                                    onChange={(e) => setNumerator2(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                    placeholder="Numerator"
+                                />
+                            </div>
+                            <div>
+                                <label className="block mb-2">Denominator 2</label>
+                                <input
+                                    type="number"
+                                    value={denominator2}
+                                    onChange={(e) => setDenominator2(e.target.value || '1')}
+                                    className="w-full p-2 border rounded"
+                                    placeholder="Denominator"
+                                />
+                            </div>
+                            <div className="text-center text-xl">
+                                =
+                            </div>
+                        </div>
+                        
+                        {result && (
+                            <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                                <h4 className="font-medium mb-2">Result:</h4>
+                                <p>{result.fraction}</p>
+                                <p>Decimal: {result.decimal}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Area & Perimeter Calculator Component
+        function AreaPerimeterCalculator({ darkMode }) {
+            const [shape, setShape] = useState('square');
+            const [side, setSide] = useState('');
+            const [length, setLength] = useState('');
+            const [width, setWidth] = useState('');
+            const [radius, setRadius] = useState('');
+            const [base, setBase] = useState('');
+            const [height, setHeight] = useState('');
+            const [side1, setSide1] = useState('');
+            const [side2, setSide2] = useState('');
+            const [side3, setSide3] = useState('');
+            const [result, setResult] = useState(null);
+
+            const calculateAreaPerimeter = () => {
+                let area, perimeter;
+                
+                switch (shape) {
+                    case 'square':
+                        const s = parseFloat(side) || 0;
+                        area = s * s;
+                        perimeter = 4 * s;
+                        setResult({
+                            formula: `Area = side² = ${s}² = ${area.toFixed(4)}`,
+                            perimeter: `Perimeter = 4 × side = 4 × ${s} = ${perimeter.toFixed(4)}`,
+                            math: `\\text{Area} = s^2 = ${s}^2 = ${area.toFixed(4)} \\\\ \\text{Perimeter} = 4s = 4 \\times ${s} = ${perimeter.toFixed(4)}`
+                        });
+                        break;
+                    case 'rectangle':
+                        const l = parseFloat(length) || 0;
+                        const w = parseFloat(width) || 0;
+                        area = l * w;
+                        perimeter = 2 * (l + w);
+                        setResult({
+                            formula: `Area = length × width = ${l} × ${w} = ${area.toFixed(4)}`,
+                            perimeter: `Perimeter = 2 × (length + width) = 2 × (${l} + ${w}) = ${perimeter.toFixed(4)}`,
+                            math: `\\text{Area} = l \\times w = ${l} \\times ${w} = ${area.toFixed(4)} \\\\ \\text{Perimeter} = 2(l + w) = 2(${l} + ${w}) = ${perimeter.toFixed(4)}`
+                        });
+                        break;
+                    case 'circle':
+                        const r = parseFloat(radius) || 0;
+                        area = Math.PI * r * r;
+                        perimeter = 2 * Math.PI * r;
+                        setResult({
+                            formula: `Area = π × radius² = π × ${r}² ≈ ${area.toFixed(4)}`,
+                            perimeter: `Circumference = 2 × π × radius = 2 × π × ${r} ≈ ${perimeter.toFixed(4)}`,
+                            math: `\\text{Area} = \\pi r^2 = \\pi \\times ${r}^2 \\approx ${area.toFixed(4)} \\\\ \\text{Circumference} = 2\\pi r = 2 \\times \\pi \\times ${r} \\approx ${perimeter.toFixed(4)}`
+                        });
+                        break;
+                    case 'triangle':
+                        const b = parseFloat(base) || 0;
+                        const h = parseFloat(height) || 0;
+                        const s1 = parseFloat(side1) || 0;
+                        const s2 = parseFloat(side2) || 0;
+                        const s3 = parseFloat(side3) || 0;
+                        area = 0.5 * b * h;
+                        perimeter = s1 + s2 + s3;
+                        setResult({
+                            formula: `Area = ½ × base × height = ½ × ${b} × ${h} = ${area.toFixed(4)}`,
+                            perimeter: `Perimeter = side1 + side2 + side3 = ${s1} + ${s2} + ${s3} = ${perimeter.toFixed(4)}`,
+                            math: `\\text{Area} = \\frac{1}{2} \\times b \\times h = \\frac{1}{2} \\times ${b} \\times ${h} = ${area.toFixed(4)} \\\\ \\text{Perimeter} = a + b + c = ${s1} + ${s2} + ${s3} = ${perimeter.toFixed(4)}`
+                        });
+                        break;
+                    default:
+                        setResult(null);
+                }
+            };
+
+            useEffect(() => {
+                calculateAreaPerimeter();
+            }, [shape, side, length, width, radius, base, height, side1, side2, side3]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden ${darkMode ? 'dark-mode' : ''}`}>
+                    <div className="p-4 border-t">
+                        <div className="mb-4">
+                            <label className="block mb-2">Shape</label>
+                            <select
+                                value={shape}
+                                onChange={(e) => setShape(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            >
+                                <option value="square">Square</option>
+                                <option value="rectangle">Rectangle</option>
+                                <option value="circle">Circle</option>
+                                <option value="triangle">Triangle</option>
+                            </select>
+                        </div>
+                        
+                        {shape === 'square' && (
+                            <div className="mb-4">
+                                <label className="block mb-2">Side Length</label>
+                                <input
+                                    type="number"
+                                    value={side}
+                                    onChange={(e) => setSide(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                    placeholder="Enter side length"
+                                />
+                            </div>
+                        )}
+                        
+                        {shape === 'rectangle' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block mb-2">Length</label>
+                                    <input
+                                        type="number"
+                                        value={length}
+                                        onChange={(e) => setLength(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                        placeholder="Enter length"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block mb-2">Width</label>
+                                    <input
+                                        type="number"
+                                        value={width}
+                                        onChange={(e) => setWidth(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                        placeholder="Enter width"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        
+                        {shape === 'circle' && (
+                            <div className="mb-4">
+                                <label className="block mb-2">Radius</label>
+                                <input
+                                    type="number"
+                                    value={radius}
+                                    onChange={(e) => setRadius(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                    placeholder="Enter radius"
+                                />
+                            </div>
+                        )}
+                        
+                        {shape === 'triangle' && (
+                            <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="block mb-2">Base</label>
+                                        <input
+                                            type="number"
+                                            value={base}
+                                            onChange={(e) => setBase(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter base"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2">Height</label>
+                                        <input
+                                            type="number"
+                                            value={height}
+                                            onChange={(e) => setHeight(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter height"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <div>
+                                        <label className="block mb-2">Side 1</label>
+                                        <input
+                                            type="number"
+                                            value={side1}
+                                            onChange={(e) => setSide1(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter side 1"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2">Side 2</label>
+                                        <input
+                                            type="number"
+                                            value={side2}
+                                            onChange={(e) => setSide2(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter side 2"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2">Side 3</label>
+                                        <input
+                                            type="number"
+                                            value={side3}
+                                            onChange={(e) => setSide3(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter side 3"
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                        
+                        {result && (
+                            <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                                <h4 className="font-bold text-lg mb-2">Results:</h4>
+                                <div className="mb-2">
+                                    <span className="font-semibold">Formula:</span> <span className="text-blue-700 dark:text-blue-300">{result.formula}</span>
+                                </div>
+                                <div className="mb-2">
+                                    <span className="font-semibold">Perimeter/Circumference:</span> <span className="text-blue-700 dark:text-blue-300">{result.perimeter}</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Unit Converter Component
+        function UnitConverter({ darkMode }) {
+            const [category, setCategory] = useState('length');
+            const [fromUnit, setFromUnit] = useState('meter');
+            const [toUnit, setToUnit] = useState('kilometer');
+            const [value, setValue] = useState('');
+            const [result, setResult] = useState(null);
+
+            const units = {
+                length: {
+                    meter: 1,
+                    centimeter: 0.01,
+                    millimeter: 0.001,
+                    kilometer: 1000,
+                    inch: 0.0254,
+                    foot: 0.3048,
+                    yard: 0.9144,
+                    mile: 1609.34
+                },
+                weight: {
+                    kilogram: 1,
+                    gram: 0.001,
+                    milligram: 0.000001,
+                    pound: 0.453592,
+                    ounce: 0.0283495,
+                    ton: 1000
+                },
+                volume: {
+                    liter: 1,
+                    milliliter: 0.001,
+                    cubicmeter: 1000,
+                    gallon: 3.78541,
+                    quart: 0.946353,
+                    pint: 0.473176,
+                    cup: 0.236588
+                },
+                temperature: {
+                    celsius: 'celsius',
+                    fahrenheit: 'fahrenheit',
+                    kelvin: 'kelvin'
+                }
+            };
+
+            const convertUnits = () => {
+                const numValue = parseFloat(value) || 0;
+                
+                if (category === 'temperature') {
+                    let convertedValue;
+                    
+                    if (fromUnit === 'celsius') {
+                        if (toUnit === 'fahrenheit') {
+                            convertedValue = (numValue * 9/5) + 32;
+                        } else if (toUnit === 'kelvin') {
+                            convertedValue = numValue + 273.15;
+                        } else {
+                            convertedValue = numValue;
+                        }
+                    } else if (fromUnit === 'fahrenheit') {
+                        if (toUnit === 'celsius') {
+                            convertedValue = (numValue - 32) * 5/9;
+                        } else if (toUnit === 'kelvin') {
+                            convertedValue = (numValue - 32) * 5/9 + 273.15;
+                        } else {
+                            convertedValue = numValue;
+                        }
+                    } else if (fromUnit === 'kelvin') {
+                        if (toUnit === 'celsius') {
+                            convertedValue = numValue - 273.15;
+                        } else if (toUnit === 'fahrenheit') {
+                            convertedValue = (numValue - 273.15) * 9/5 + 32;
+                        } else {
+                            convertedValue = numValue;
+                        }
+                    }
+                    
+                    setResult({
+                        value: convertedValue.toFixed(6),
+                        formula: 
+                            fromUnit === 'celsius' && toUnit === 'fahrenheit' ? `(${numValue} × 9/5) + 32 = ${convertedValue.toFixed(2)}` :
+                            fromUnit === 'celsius' && toUnit === 'kelvin' ? `${numValue} + 273.15 = ${convertedValue.toFixed(2)}` :
+                            fromUnit === 'fahrenheit' && toUnit === 'celsius' ? `(${numValue} − 32) × 5/9 = ${convertedValue.toFixed(2)}` :
+                            fromUnit === 'fahrenheit' && toUnit === 'kelvin' ? `(${numValue} − 32) × 5/9 + 273.15 = ${convertedValue.toFixed(2)}` :
+                            fromUnit === 'kelvin' && toUnit === 'celsius' ? `${numValue} − 273.15 = ${convertedValue.toFixed(2)}` :
+                            fromUnit === 'kelvin' && toUnit === 'fahrenheit' ? `(${numValue} − 273.15) × 9/5 + 32 = ${convertedValue.toFixed(2)}` :
+                            `${numValue}`
+                    });
+                } else {
+                    const fromFactor = units[category][fromUnit];
+                    const toFactor = units[category][toUnit];
+                    const baseValue = numValue * fromFactor;
+                    const convertedValue = baseValue / toFactor;
+                    
+                    setResult({
+                        value: convertedValue.toFixed(6),
+                        formula: `(${numValue} ${fromUnit} × ${fromFactor}) / ${toFactor} = ${convertedValue.toFixed(6)} ${toUnit}`
+                    });
+                }
+            };
+
+            useEffect(() => {
+                setFromUnit(Object.keys(units[category])[0]);
+                setToUnit(Object.keys(units[category])[1]);
+                convertUnits();
+            }, [category]);
+
+            useEffect(() => {
+                if (value !== '') {
+                    convertUnits();
+                }
+            }, [fromUnit, toUnit, value]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden ${darkMode ? 'dark-mode' : ''}`}>
+                    <div className="p-4 border-t">
+                        <div className="mb-4">
+                            <label className="block mb-2">Category</label>
+                            <select
+                                value={category}
+                                onChange={(e) => setCategory(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            >
+                                <option value="length">Length</option>
+                                <option value="weight">Weight</option>
+                                <option value="volume">Volume</option>
+                                <option value="temperature">Temperature</option>
+                            </select>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label className="block mb-2">From</label>
+                                <select
+                                    value={fromUnit}
+                                    onChange={(e) => setFromUnit(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                >
+                                    {units[category] && Object.keys(units[category]).map(unit => (
+                                        <option key={`from-${unit}`} value={unit}>
+                                            {unit.charAt(0).toUpperCase() + unit.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block mb-2">To</label>
+                                <select
+                                    value={toUnit}
+                                    onChange={(e) => setToUnit(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                >
+                                    {units[category] && Object.keys(units[category]).map(unit => (
+                                        <option key={`to-${unit}`} value={unit}>
+                                            {unit.charAt(0).toUpperCase() + unit.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block mb-2">Value</label>
+                                <input
+                                    type="number"
+                                    value={value}
+                                    onChange={(e) => setValue(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                    placeholder="Enter value"
+                                />
+                            </div>
+                        </div>
+                        
+                        {result && (
+                            <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                                <h4 className="font-medium mb-2">Result:</h4>
+                                <p className="text-xl font-semibold">
+                                    {value} {fromUnit} = {result.value} {toUnit}
+                                </p>
+                                <div className="mt-2 text-sm">
+                                    <p>Calculation: {result.formula}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Equation Solver Component
+        function EquationSolver({ darkMode }) {
+            const [equationType, setEquationType] = useState('linear');
+            const [a, setA] = useState('');
+            const [b, setB] = useState('');
+            const [c, setC] = useState('');
+            const [d, setD] = useState('');
+            const [result, setResult] = useState(null);
+
+            const solveEquation = () => {
+                try {
+                    if (equationType === 'linear') {
+                        // Linear equation: ax + b = 0
+                        const numA = parseFloat(a) || 0;
+                        const numB = parseFloat(b) || 0;
+                        
+                        if (numA === 0) {
+                            setResult({
+                                solution: numB === 0 ? 'Infinite solutions' : 'No solution',
+                                steps: [
+                                    `${numA}x + ${numB} = 0`,
+                                    numB === 0 ? '0 = 0 (Always true)' : '0 = -${numB} (No solution)'
+                                ]
+                            });
+                        } else {
+                            const solution = -numB / numA;
+                            setResult({
+                                solution: `x = ${solution.toFixed(4)}`,
+                                steps: [
+                                    `${numA}x + ${numB} = 0`,
+                                    `${numA}x = -${numB}`,
+                                    `x = -${numB} / ${numA}`,
+                                    `x = ${solution.toFixed(4)}`
+                                ]
+                            });
+                        }
+                    } else if (equationType === 'quadratic') {
+                        // Quadratic equation: ax² + bx + c = 0
+                        const numA = parseFloat(a) || 0;
+                        const numB = parseFloat(b) || 0;
+                        const numC = parseFloat(c) || 0;
+                        
+                        if (numA === 0) {
+                            // It's actually linear
+                            if (numB === 0) {
+                                setResult({
+                                    solution: numC === 0 ? 'Infinite solutions' : 'No solution',
+                                    steps: [
+                                        `${numB}x + ${numC} = 0`,
+                                        numC === 0 ? '0 = 0 (Always true)' : '0 = -${numC} (No solution)'
+                                    ]
+                                });
+                            } else {
+                                const solution = -numC / numB;
+                                setResult({
+                                    solution: `x = ${solution.toFixed(4)}`,
+                                    steps: [
+                                        `${numB}x + ${numC} = 0`,
+                                        `${numB}x = -${numC}`,
+                                        `x = -${numC} / ${numB}`,
+                                        `x = ${solution.toFixed(4)}`
+                                    ]
+                                });
+                            }
+                        } else {
+                            const discriminant = numB * numB - 4 * numA * numC;
+                            
+                            if (discriminant < 0) {
+                                const realPart = (-numB / (2 * numA)).toFixed(4);
+                                const imaginaryPart = (Math.sqrt(-discriminant) / (2 * numA)).toFixed(4);
+                                setResult({
+                                    solution: `x = ${realPart} ± ${imaginaryPart}i`,
+                                    steps: [
+                                        `Discriminant (D) = b² - 4ac = ${numB}² - 4 × ${numA} × ${numC} = ${discriminant}`,
+                                        'D < 0 → Complex roots',
+                                        `x = [-b ± √(b² - 4ac)] / (2a)`,
+                                        `x = [${-numB} ± √${discriminant}] / ${2 * numA}`,
+                                        `x = ${realPart} ± ${imaginaryPart}i`
+                                    ]
+                                });
+                            } else if (discriminant === 0) {
+                                const solution = -numB / (2 * numA);
+                                setResult({
+                                    solution: `x = ${solution.toFixed(4)} (double root)`,
+                                    steps: [
+                                        `Discriminant (D) = b² - 4ac = ${numB}² - 4 × ${numA} × ${numC} = ${discriminant}`,
+                                        'D = 0 → One real root',
+                                        `x = -b / (2a) = ${-numB} / ${2 * numA}`,
+                                        `x = ${solution.toFixed(4)}`
+                                    ]
+                                });
+                            } else {
+                                const root1 = (-numB + Math.sqrt(discriminant)) / (2 * numA);
+                                const root2 = (-numB - Math.sqrt(discriminant)) / (2 * numA);
+                                setResult({
+                                    solution: `x₁ = ${root1.toFixed(4)}, x₂ = ${root2.toFixed(4)}`,
+                                    steps: [
+                                        `Discriminant (D) = b² - 4ac = ${numB}² - 4 × ${numA} × ${numC} = ${discriminant}`,
+                                        'D > 0 → Two real roots',
+                                        `x = [-b ± √(b² - 4ac)] / (2a)`,
+                                        `x = [${-numB} ± √${discriminant}] / ${2 * numA}`,
+                                        `x₁ = ${root1.toFixed(4)}, x₂ = ${root2.toFixed(4)}`
+                                    ]
+                                });
+                            }
+                        }
+                    } else if (equationType === 'cubic') {
+                        // Cubic equation: ax³ + bx² + cx + d = 0
+                        const numA = parseFloat(a) || 0;
+                        const numB = parseFloat(b) || 0;
+                        const numC = parseFloat(c) || 0;
+                        const numD = parseFloat(d) || 0;
+                        
+                        // Using math.js to solve cubic equations
+                        const solutions = math.polynomialRoot(numD, numC, numB, numA);
+                        
+                        let realSolutions = [];
+                        solutions.forEach(sol => {
+                            // Check if imaginary part is negligible
+                            if (Math.abs(math.im(sol)) < 1e-10) {
+                                realSolutions.push(math.re(sol));
+                            }
+                        });
+                        
+                        if (realSolutions.length === 0) {
+                            setResult({
+                                solution: 'No real solutions',
+                                steps: [
+                                    'All solutions are complex',
+                                    `x₁ ≈ ${math.re(solutions[0]).toFixed(4)} + ${math.im(solutions[0]).toFixed(4)}i`,
+                                    `x₂ ≈ ${math.re(solutions[1]).toFixed(4)} + ${math.im(solutions[1]).toFixed(4)}i`,
+                                    `x₃ ≈ ${math.re(solutions[2]).toFixed(4)} + ${math.im(solutions[2]).toFixed(4)}i`
+                                ]
+                            });
+                        } else {
+                            const solutionText = realSolutions.map((sol, i) => 
+                                `x${i+1} = ${sol.toFixed(4)}`).join(', ');
+                            setResult({
+                                solution: solutionText,
+                                steps: [
+                                    'Using the cubic formula:',
+                                    '1. Calculate discriminant to determine nature of roots',
+                                    '2. Apply appropriate solution method based on discriminant',
+                                    `Solutions: ${solutionText}`
+                                ]
+                            });
+                        }
+                    }
+                } catch (error) {
+                    setResult({
+                        solution: 'Error solving equation',
+                        steps: ['Invalid input or calculation error']
+                    });
+                }
+            };
+
+            useEffect(() => {
+                solveEquation();
+            }, [equationType, a, b, c, d]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden ${darkMode ? 'dark-mode' : ''}`}>
+                    <div className="p-4 border-t">
+                        <div className="mb-4">
+                            <label className="block mb-2">Equation Type</label>
+                            <select
+                                value={equationType}
+                                onChange={(e) => setEquationType(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            >
+                                <option value="linear">Linear (ax + b = 0)</option>
+                                <option value="quadratic">Quadratic (ax² + bx + c = 0)</option>
+                                <option value="cubic">Cubic (ax³ + bx² + cx + d = 0)</option>
+                            </select>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                            {equationType === 'linear' && (
+                                <>
+                                    <div>
+                                        <label className="block mb-2">a (coefficient)</label>
+                                        <input
+                                            type="number"
+                                            value={a}
+                                            onChange={(e) => setA(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter a"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2">b (constant)</label>
+                                        <input
+                                            type="number"
+                                            value={b}
+                                            onChange={(e) => setB(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter b"
+                                        />
+                                    </div>
+                                </>
+                            )}
+                            
+                            {equationType === 'quadratic' && (
+                                <>
+                                    <div>
+                                        <label className="block mb-2">a (x² coefficient)</label>
+                                        <input
+                                            type="number"
+                                            value={a}
+                                            onChange={(e) => setA(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter a"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2">b (x coefficient)</label>
+                                        <input
+                                            type="number"
+                                            value={b}
+                                            onChange={(e) => setB(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter b"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2">c (constant)</label>
+                                        <input
+                                            type="number"
+                                            value={c}
+                                            onChange={(e) => setC(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter c"
+                                        />
+                                    </div>
+                                </>
+                            )}
+                            
+                            {equationType === 'cubic' && (
+                                <>
+                                    <div>
+                                        <label className="block mb-2">a (x³ coefficient)</label>
+                                        <input
+                                            type="number"
+                                            value={a}
+                                            onChange={(e) => setA(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter a"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2">b (x² coefficient)</label>
+                                        <input
+                                            type="number"
+                                            value={b}
+                                            onChange={(e) => setB(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter b"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2">c (x coefficient)</label>
+                                        <input
+                                            type="number"
+                                            value={c}
+                                            onChange={(e) => setC(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter c"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2">d (constant)</label>
+                                        <input
+                                            type="number"
+                                            value={d}
+                                            onChange={(e) => setD(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            placeholder="Enter d"
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        
+                        {result && (
+                            <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                                <h4 className="font-medium mb-2">Solution:</h4>
+                                <p className="text-lg font-semibold">{result.solution}</p>
+                                
+                                <h4 className="font-medium mt-4 mb-2">Steps:</h4>
+                                <ul className="list-disc pl-5 space-y-1">
+                                    {result.steps.map((step, index) => (
+                                        <li key={`step-${index}`}>{step}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Statistics Calculator Component
+        function StatisticsCalculator({ darkMode }) {
+            const [dataInput, setDataInput] = useState('');
+            const [results, setResults] = useState(null);
+
+            const calculateStatistics = () => {
+                const data = dataInput.split(',')
+                    .map(item => parseFloat(item.trim()))
+                    .filter(item => !isNaN(item));
+                
+                if (data.length === 0) {
+                    setResults(null);
+                    return;
+                }
+                
+                // Mean
+                const mean = data.reduce((sum, val) => sum + val, 0) / data.length;
+                
+                // Median
+                const sorted = [...data].sort((a, b) => a - b);
+                let median;
+                if (sorted.length % 2 === 0) {
+                    median = (sorted[sorted.length/2 - 1] + sorted[sorted.length/2]) / 2;
+                } else {
+                    median = sorted[Math.floor(sorted.length/2)];
+                }
+                
+                // Mode
+                const frequency = {};
+                sorted.forEach(num => {
+                    frequency[num] = (frequency[num] || 0) + 1;
+                });
+                const maxFrequency = Math.max(...Object.values(frequency));
+                const modes = Object.keys(frequency)
+                    .filter(key => frequency[key] === maxFrequency)
+                    .map(Number);
+                
+                // Range
+                const range = sorted[sorted.length - 1] - sorted[0];
+                
+                // Variance and Standard Deviation
+                const squaredDifferences = data.map(num => Math.pow(num - mean, 2));
+                const variance = squaredDifferences.reduce((sum, val) => sum + val, 0) / data.length;
+                const stdDev = Math.sqrt(variance);
+                
+                setResults({
+                    count: data.length,
+                    mean: mean,
+                    median: median,
+                    mode: modes.length === data.length ? 'No mode (all values unique)' : 
+                          modes.length > 1 ? `Multiple modes: ${modes.join(', ')}` : modes[0],
+                    range: range,
+                    variance: variance,
+                    stdDev: stdDev,
+                    sortedData: sorted.join(', ')
+                });
+            };
+
+            useEffect(() => {
+                calculateStatistics();
+            }, [dataInput]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden ${darkMode ? 'dark-mode' : ''}`}>
+                    <div className="p-4 border-t">
+                        <div className="mb-4">
+                            <label className="block mb-2">Enter Data (comma-separated)</label>
+                            <input
+                                type="text"
+                                value={dataInput}
+                                onChange={(e) => setDataInput(e.target.value)}
+                                className="w-full p-2 border rounded"
+                                placeholder="e.g. 5, 10, 15, 20, 25"
+                            />
+                        </div>
+                        
+                        {results && (
+                            <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                                <h4 className="font-medium mb-2">Results:</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p><span className="font-medium">Count:</span> {results.count}</p>
+                                        <p><span className="font-medium">Mean (Average):</span> {results.mean.toFixed(4)}</p>
+                                        <p><span className="font-medium">Median:</span> {results.median.toFixed(4)}</p>
+                                        <p><span className="font-medium">Mode:</span> {results.mode}</p>
+                                    </div>
+                                    <div>
+                                        <p><span className="font-medium">Range:</span> {results.range.toFixed(4)}</p>
+                                        <p><span className="font-medium">Variance:</span> {results.variance.toFixed(4)}</p>
+                                        <p><span className="font-medium">Standard Deviation:</span> {results.stdDev.toFixed(4)}</p>
+                                    </div>
+                                </div>
+                                
+                                <h4 className="font-medium mt-4 mb-2">Sorted Data:</h4>
+                                <p>{results.sortedData}</p>
+                                
+                                <div className="mt-4 math-display">
+                                    <div className="math-tex" dangerouslySetInnerHTML={{ 
+                                        __html: `\\[\\begin{aligned}
+                                            \\text{Mean} &= \\frac{\\sum x}{n} = \\frac{\\sum x}{${results.count}} \\approx ${results.mean.toFixed(4)} \\\\
+                                            \\text{Variance} &= \\frac{\\sum (x - \\bar{x})^2}{n} \\approx ${results.variance.toFixed(4)} \\\\
+                                            \\text{Std Dev} &= \\sqrt{\\text{Variance}} \\approx ${results.stdDev.toFixed(4)}
+                                        \\end{aligned}\\]` 
+                                    }} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Matrix Calculator Component
+        function MatrixCalculator({ darkMode }) {
+            const [operation, setOperation] = useState('add');
+            const [rows, setRows] = useState(2);
+            const [cols, setCols] = useState(2);
+            const [matrixA, setMatrixA] = useState([[0, 0], [0, 0]]);
+            const [matrixB, setMatrixB] = useState([[0, 0], [0, 0]]);
+            const [result, setResult] = useState(null);
+
+            useEffect(() => {
+                // Initialize matrices when dimensions change
+                const newMatrixA = Array(rows).fill().map(() => Array(cols).fill(0));
+                const newMatrixB = Array(rows).fill().map(() => Array(cols).fill(0));
+                
+                // For multiplication, adjust second matrix columns
+                const multCols = operation === 'multiply' ? cols : rows;
+                const newMatrixBMult = Array(cols).fill().map(() => Array(multCols).fill(0));
+                
+                setMatrixA(newMatrixA);
+                setMatrixB(operation === 'multiply' ? newMatrixBMult : newMatrixB);
+                setResult(null);
+            }, [rows, cols, operation]);
+
+            const handleMatrixInput = (matrix, setMatrix, row, col, value) => {
+                const newMatrix = matrix.map(arr => [...arr]);
+                newMatrix[row][col] = parseFloat(value) || 0;
+                setMatrix(newMatrix);
+            };
+
+            const performOperation = () => {
+                try {
+                    let operationResult;
+                    
+                    if (operation === 'add') {
+                        operationResult = math.add(matrixA, matrixB);
+                    } else if (operation === 'subtract') {
+                        operationResult = math.subtract(matrixA, matrixB);
+                    } else if (operation === 'multiply') {
+                        operationResult = math.multiply(matrixA, matrixB);
+                    } else if (operation === 'determinant') {
+                        if (matrixA.length !== matrixA[0].length) {
+                            throw new Error('Matrix must be square for determinant');
+                        }
+                        operationResult = math.det(matrixA);
+                    } else if (operation === 'inverse') {
+                        if (matrixA.length !== matrixA[0].length) {
+                            throw new Error('Matrix must be square for inverse');
+                        }
+                        operationResult = math.inv(matrixA);
+                    }
+                    
+                    setResult(operationResult);
+                } catch (error) {
+                    setResult(`Error: ${error.message}`);
+                }
+            };
+
+            const renderMatrix = (matrix, setMatrix, label) => {
+                return (
+                    <div className="mb-4">
+                        <label className="block mb-2">{label}</label>
+                        <div className="matrix-input" style={{ 
+                            gridTemplateColumns: `repeat(${matrix[0].length}, minmax(0, 1fr))` 
+                        }}>
+                            {matrix.map((row, rowIndex) => (
+                                row.map((cell, colIndex) => (
+                                    <input
+                                        key={`${label}-${rowIndex}-${colIndex}`}
+                                        type="number"
+                                        value={cell}
+                                        onChange={(e) => handleMatrixInput(matrix, setMatrix, rowIndex, colIndex, e.target.value)}
+                                        className="p-2 border rounded"
+                                        placeholder="0"
+                                    />
+                                ))
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className={`calculator-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden ${darkMode ? 'dark-mode' : ''}`}>
+                    <div className="p-4 border-t">
+                        <div className="mb-4">
+                            <label className="block mb-2">Operation</label>
+                            <select
+                                value={operation}
+                                onChange={(e) => setOperation(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            >
+                                <option value="add">Addition (A + B)</option>
+                                <option value="subtract">Subtraction (A - B)</option>
+                                <option value="multiply">Multiplication (A × B)</option>
+                                <option value="determinant">Determinant (det(A))</option>
+                                <option value="inverse">Inverse (A⁻¹)</option>
+                            </select>
+                        </div>
+                        
+                        {!['determinant', 'inverse'].includes(operation) && (
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block mb-2">Rows</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="6"
+                                        value={rows}
+                                        onChange={(e) => setRows(Math.min(6, Math.max(1, parseInt(e.target.value) || 2)))}
+                                        className="w-full p-2 border rounded"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block mb-2">Columns</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="6"
+                                        value={cols}
+                                        onChange={(e) => setCols(Math.min(6, Math.max(1, parseInt(e.target.value) || 2)))}
+                                        className="w-full p-2 border rounded"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        
+                        {renderMatrix(matrixA, setMatrixA, 'Matrix A')}
+                        
+                        {!['determinant', 'inverse'].includes(operation) && 
+                            renderMatrix(matrixB, setMatrixB, 'Matrix B')}
+                        
+                        <button
+                            onClick={performOperation}
+                            className="w-full p-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        >
+                            Calculate
+                        </button>
+                        
+                        {result && (
+                            <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                                <h4 className="font-medium mb-2">Result:</h4>
+                                {typeof result === 'string' ? (
+                                    <p>{result}</p>
+                                ) : Array.isArray(result) ? (
+                                    <div className="matrix-input" style={{ 
+                                        gridTemplateColumns: `repeat(${result[0].length}, minmax(0, 1fr))` 
+                                    }}>
+                                        {result.flatMap((row, rowIndex) => 
+                                            row.map((cell, colIndex) => (
+                                                <div 
+                                                    key={`result-${rowIndex}-${colIndex}`}
+                                                    className="p-2 border rounded bg-white dark:bg-gray-800 text-center"
+                                                >
+                                                    {cell.toFixed(2)}
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p>Determinant: {result.toFixed(4)}</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Probability Calculator Component
+        function ProbabilityCalculator({ darkMode }) {
+            const [operation, setOperation] = useState('permutation');
+            const [n, setN] = useState('');
+            const [k, setK] = useState('');
+            const [probabilityA, setProbabilityA] = useState('');
+            const [probabilityB, setProbabilityB] = useState('');
+            const [result, setResult] = useState(null);
+
+            const calculateProbability = () => {
+                try {
+                    let calculation;
+                    
+                    if (operation === 'permutation') {
+                        const numN = parseInt(n) || 0;
+                        const numK = parseInt(k) || 0;
+                        if (numK > numN) throw new Error('k cannot be greater than n');
+                        calculation = math.permutations(numN, numK);
+                        setResult({
+                            value: calculation,
+                            formula: `P(${numN},${numK}) = \\frac{${numN}!}{(${numN}-${numK})!} = ${calculation}`
+                        });
+                    } else if (operation === 'combination') {
+                        const numN = parseInt(n) || 0;
+                        const numK = parseInt(k) || 0;
+                        if (numK > numN) throw new Error('k cannot be greater than n');
+                        calculation = math.combinations(numN, numK);
+                        setResult({
+                            value: calculation,
+                            formula: `C(${numN},${numK}) = \\frac{${numN}!}{${numK}!(${numN}-${numK})!} = ${calculation}`
+                        });
+                    } else if (operation === 'independent') {
+                        const probA = parseFloat(probabilityA) || 0;
+                        const probB = parseFloat(probabilityB) || 0;
+                        if (probA < 0 || probA > 1 || probB < 0 || probB > 1) {
+                            throw new Error('Probabilities must be between 0 and 1');
+                        }
+                        calculation = probA * probB;
+                        setResult({
+                            value: calculation,
+                            formula: `P(A \\cap B) = P(A) \\times P(B) = ${probA} \\times ${probB} = ${calculation.toFixed(6)}`
+                        });
+                    } else if (operation === 'mutuallyExclusive') {
+                        const probA = parseFloat(probabilityA) || 0;
+                        const probB = parseFloat(probabilityB) || 0;
+                        if (probA < 0 || probA > 1 || probB < 0 || probB > 1) {
+                            throw new Error('Probabilities must be between 0 and 1');
+                        }
+                        calculation = probA + probB;
+                        setResult({
+                            value: calculation,
+                            formula: `P(A \\cup B) = P(A) + P(B) = ${probA} + ${probB} = ${calculation.toFixed(6)}`
+                        });
+                    }
+                } catch (error) {
+                    setResult({
+                        value: 'Error',
+                        formula: error.message
+                    });
+                }
+            };
+
+            useEffect(() => {
+                calculateProbability();
+            }, [operation, n, k, probabilityA, probabilityB]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden ${darkMode ? 'dark-mode' : ''}`}>
+                    <div className="p-4 border-t">
+                        <div className="mb-4">
+                            <label className="block mb-2">Operation</label>
+                            <select
+                                value={operation}
+                                onChange={(e) => setOperation(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            >
+                                <option value="permutation">Permutation (nPk)</option>
+                                <option value="combination">Combination (nCk)</option>
+                                <option value="independent">Independent Events (A ∩ B)</option>
+                                <option value="mutuallyExclusive">Mutually Exclusive (A ∪ B)</option>
+                            </select>
+                        </div>
+                        
+                        {['permutation', 'combination'].includes(operation) ? (
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block mb-2">n (total items)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={n}
+                                        onChange={(e) => setN(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                        placeholder="Enter n"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block mb-2">k (selected items)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={k}
+                                        onChange={(e) => setK(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                        placeholder="Enter k"
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block mb-2">P(A)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="1"
+                                        step="0.01"
+                                        value={probabilityA}
+                                        onChange={(e) => setProbabilityA(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                        placeholder="Probability of A (0-1)"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block mb-2">P(B)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="1"
+                                        step="0.01"
+                                        value={probabilityB}
+                                        onChange={(e) => setProbabilityB(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                        placeholder="Probability of B (0-1)"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        
+                        {result && (
+                            <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                                <h4 className="font-medium mb-2">Result:</h4>
+                                <p className="text-lg font-semibold">
+                                    {typeof result.value === 'number' ? result.value.toLocaleString() : result.value}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // GCF/LCM Calculator Component
+        function GCFLCMCalculator({ darkMode }) {
+            const [operation, setOperation] = useState('gcf');
+            const [numbers, setNumbers] = useState('');
+            const [result, setResult] = useState(null);
+
+            const calculateGCF = (nums) => {
+                const gcd = (a, b) => b ? gcd(b, a % b) : a;
+                return nums.reduce((a, b) => gcd(a, b));
+            };
+
+            const calculateLCM = (nums) => {
+                const lcm = (a, b) => (a * b) / calculateGCF([a, b]);
+                return nums.reduce((a, b) => lcm(a, b));
+            };
+
+            const calculateResult = () => {
+                const numArray = numbers.split(',')
+                    .map(item => parseInt(item.trim()))
+                    .filter(item => !isNaN(item) && item > 0);
+                
+                if (numArray.length < 2) {
+                    setResult('Please enter at least two valid numbers');
+                    return;
+                }
+                
+                if (operation === 'gcf') {
+                    const gcf = calculateGCF(numArray);
+                    setResult({
+                        value: gcf,
+                        formula: `GCF of ${numArray.join(', ')} = ${gcf}`
+                    });
+                } else {
+                    const lcm = calculateLCM(numArray);
+                    setResult({
+                        value: lcm,
+                        formula: `LCM of ${numArray.join(', ')} = ${lcm}`
+                    });
+                }
+            };
+
+            useEffect(() => {
+                calculateResult();
+            }, [operation, numbers]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden ${darkMode ? 'dark-mode' : ''}`}>
+                    <div className="p-4 border-t">
+                        <div className="mb-4">
+                            <label className="block mb-2">Operation</label>
+                            <select
+                                value={operation}
+                                onChange={(e) => setOperation(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            >
+                                <option value="gcf">Greatest Common Factor (GCF)</option>
+                                <option value="lcm">Least Common Multiple (LCM)</option>
+                            </select>
+                        </div>
+                        
+                        <div className="mb-4">
+                            <label className="block mb-2">Numbers (comma-separated)</label>
+                            <input
+                                type="text"
+                                value={numbers}
+                                onChange={(e) => setNumbers(e.target.value)}
+                                className="w-full p-2 border rounded"
+                                placeholder="e.g. 12, 18, 24"
+                            />
+                        </div>
+                        
+                        {result && (
+                            <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                                <h4 className="font-medium mb-2">Result:</h4>
+                                {typeof result === 'string' ? (
+                                    <p>{result}</p>
+                                ) : (
+                                    <>
+                                        <p className="text-lg font-semibold">{result.value}</p>
+                                        <p>{result.formula}</p>
+                                        <div className="mt-2 math-display">
+                                            <div className="math-tex" dangerouslySetInnerHTML={{ 
+                                                __html: `\\[\\text{${operation === 'gcf' ? 'GCF' : 'LCM'}} = ${result.value}\\]` 
+                                            }} />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Date Calculator Component
+        function DateCalculator({ darkMode }) {
+            const [date1, setDate1] = useState('');
+            const [date2, setDate2] = useState('');
+            const [operation, setOperation] = useState('difference'); // 'difference', 'add', 'subtract'
+            const [days, setDays] = useState('');
+            const [result, setResult] = useState(null);
+
+            const calculateDate = () => {
+                try {
+                    const date1Obj = new Date(date1);
+                    const date2Obj = new Date(date2);
+                    if (operation === 'difference') {
+                        if (!date1 || !date2) { setResult(null); return; }
+                        const diffTime = Math.abs(date2Obj - date1Obj);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        setResult({
+                            value: diffDays,
+                            formula: `Difference: ${date2} - ${date1} = ${diffDays} days`
+                        });
+                    } else if (operation === 'add') {
+                        if (!date1 || !days) { setResult(null); return; }
+                        const d = new Date(date1Obj);
+                        d.setDate(d.getDate() + parseInt(days));
+                        setResult({
+                            value: d.toISOString().slice(0, 10),
+                            formula: `${date1} + ${days} days = ${d.toISOString().slice(0, 10)}`
+                        });
+                    } else if (operation === 'subtract') {
+                        if (!date1 || !days) { setResult(null); return; }
+                        const d = new Date(date1Obj);
+                        d.setDate(d.getDate() - parseInt(days));
+                        setResult({
+                            value: d.toISOString().slice(0, 10),
+                            formula: `${date1} - ${days} days = ${d.toISOString().slice(0, 10)}`
+                        });
+                    }
+                } catch (error) {
+                    setResult({
+                        value: 'Error',
+                        formula: error.message
+                    });
+                }
+            };
+
+            useEffect(() => {
+                calculateDate();
+            }, [date1, date2, operation, days]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden ${darkMode ? 'dark-mode' : ''}`}>
+                    <div className="p-4 border-t">
+                        <div className="mb-4">
+                            <label className="block mb-2">Date 1</label>
+                            <input
+                                type="date"
+                                value={date1}
+                                onChange={(e) => setDate1(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            />
+                        </div>
+                        {operation === 'difference' && (
+                            <div className="mb-4">
+                                <label className="block mb-2">Date 2</label>
+                                <input
+                                    type="date"
+                                    value={date2}
+                                    onChange={(e) => setDate2(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                />
+                            </div>
+                        )}
+                        {(operation === 'add' || operation === 'subtract') && (
+                            <div className="mb-4">
+                                <label className="block mb-2">Days</label>
+                                <input
+                                    type="number"
+                                    value={days}
+                                    onChange={(e) => setDays(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                    placeholder="Enter days"
+                                />
+                            </div>
+                        )}
+                        <div className="mb-4">
+                            <label className="block mb-2">Operation</label>
+                            <select
+                                value={operation}
+                                onChange={(e) => setOperation(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            >
+                                <option value="difference">Difference (Date 2 - Date 1)</option>
+                                <option value="add">Add Days (Date 1 + X days)</option>
+                                <option value="subtract">Subtract Days (Date 1 - X days)</option>
+                            </select>
+                        </div>
+                        {result && (
+                            <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                                <h4 className="font-medium mb-2">Result:</h4>
+                                <p className="text-lg font-semibold">{result.value}</p>
+                                <p>{result.formula}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Age Calculator Component
+        function AgeCalculator({ darkMode }) {
+            const [birthDate, setBirthDate] = useState('');
+            const [currentDate, setCurrentDate] = useState('');
+            const [result, setResult] = useState(null);
+
+            const calculateAge = () => {
+                try {
+                    if (!birthDate || !currentDate) { setResult(null); return; }
+                    const birthDateObj = new Date(birthDate);
+                    const currentDateObj = new Date(currentDate);
+                    let age = currentDateObj.getFullYear() - birthDateObj.getFullYear();
+                    const monthDiff = currentDateObj.getMonth() - birthDateObj.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && currentDateObj.getDate() < birthDateObj.getDate())) {
+                        age--;
+                    }
+                    setResult({
+                        value: age,
+                        formula: `Age: ${currentDate} - ${birthDate} = ${age} years`
+                    });
+                } catch (error) {
+                    setResult({
+                        value: 'Error',
+                        formula: error.message
+                    });
+                }
+            };
+
+            useEffect(() => {
+                calculateAge();
+            }, [birthDate, currentDate]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden ${darkMode ? 'dark-mode' : ''}`}>
+                    <div className="p-4 border-t">
+                        <div className="mb-4">
+                            <label className="block mb-2">Birth Date</label>
+                            <input
+                                type="date"
+                                value={birthDate}
+                                onChange={(e) => setBirthDate(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block mb-2">Current Date</label>
+                            <input
+                                type="date"
+                                value={currentDate}
+                                onChange={(e) => setCurrentDate(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            />
+                        </div>
+                        {result && (
+                            <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                                <h4 className="font-medium mb-2">Result:</h4>
+                                <p className="text-lg font-semibold">{result.value}</p>
+                                <p>{result.formula}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Speed Calculator Component
+        function SpeedCalculator({ darkMode }) {
+            const [distance, setDistance] = useState('');
+            const [time, setTime] = useState('');
+            const [operation, setOperation] = useState('speed'); // 'speed', 'distance', 'time'
+            const [result, setResult] = useState(null);
+
+            const calculateSpeed = () => {
+                try {
+                    if (!distance && !time) { setResult(null); return; }
+                    const numDistance = parseFloat(distance) || 0;
+                    const numTime = parseFloat(time) || 0;
+                    if (numDistance < 0 || numTime < 0) {
+                        throw new Error('Distance and time must be non-negative.');
+                    }
+                    if (operation === 'speed') {
+                        if (numTime === 0) {
+                            setResult({
+                                value: 'Undefined (division by zero)',
+                                formula: `Speed = Distance / Time = ${numDistance} / ${numTime}`
+                            });
+                        } else {
+                            const speed = numDistance / numTime;
+                            setResult({
+                                value: speed.toFixed(2),
+                                formula: `Speed = Distance / Time = ${numDistance} / ${numTime} = ${speed.toFixed(2)}`
+                            });
+                        }
+                    } else if (operation === 'distance') {
+                        if (numTime === 0) {
+                            setResult({
+                                value: '0 (if time is 0, distance is 0)',
+                                formula: `Distance = Speed × Time = 0 × ${numTime}`
+                            });
+                        } else {
+                            const speed = parseFloat(result && result.value) || 0;
+                            const distance = speed * numTime;
+                            setResult({
+                                value: distance.toFixed(2),
+                                formula: `Distance = Speed × Time = ${speed} × ${numTime} = ${distance.toFixed(2)}`
+                            });
+                        }
+                    } else if (operation === 'time') {
+                        if (numDistance === 0) {
+                            setResult({
+                                value: '0 (if distance is 0, time is 0)',
+                                formula: `Time = Distance / Speed = 0 / ${result && result.value}`
+                            });
+                        } else {
+                            const speed = parseFloat(result && result.value) || 0;
+                            if (speed === 0) {
+                                setResult({
+                                    value: 'Undefined (division by zero)',
+                                    formula: `Time = Distance / Speed = ${numDistance} / 0`
+                                });
+                            } else {
+                                const time = numDistance / speed;
+                                setResult({
+                                    value: time.toFixed(2),
+                                    formula: `Time = Distance / Speed = ${numDistance} / ${speed} = ${time.toFixed(2)}`
+                                });
+                            }
+                        }
+                    }
+                } catch (error) {
+                    setResult({
+                        value: 'Error',
+                        formula: error.message
+                    });
+                }
+            };
+
+            useEffect(() => {
+                calculateSpeed();
+            }, [distance, time, operation]);
+
+            return (
+                <div className={`calculator-card bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden ${darkMode ? 'dark-mode' : ''}`}>
+                    <div className="p-4 border-t">
+                        <div className="mb-4">
+                            <label className="block mb-2">Distance</label>
+                            <input
+                                type="number"
+                                value={distance}
+                                onChange={(e) => setDistance(e.target.value)}
+                                className="w-full p-2 border rounded"
+                                placeholder="Enter distance"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block mb-2">Time</label>
+                            <input
+                                type="number"
+                                value={time}
+                                onChange={(e) => setTime(e.target.value)}
+                                className="w-full p-2 border rounded"
+                                placeholder="Enter time"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block mb-2">Operation</label>
+                            <select
+                                value={operation}
+                                onChange={(e) => setOperation(e.target.value)}
+                                className="w-full p-2 border rounded"
+                            >
+                                <option value="speed">Speed (Distance / Time)</option>
+                                <option value="distance">Distance (Speed × Time)</option>
+                                <option value="time">Time (Distance / Speed)</option>
+                            </select>
+                        </div>
+                        {result && (
+                            <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-700">
+                                <h4 className="font-medium mb-2">Result:</h4>
+                                <p className="text-lg font-semibold">{result.value}</p>
+                                <p>{result.formula}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
